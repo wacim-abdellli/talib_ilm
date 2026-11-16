@@ -46,15 +46,27 @@ jobs:
 
       - name: Prepare and Generate iOS Notification Sounds
         run: |
-          echo "=== Ensuring all notification sounds are converted to .caf format ==="
+          echo "=== Ensuring all notification sounds are capped <= 29.5s 22kHz mono .caf ==="
           mkdir -p ios/Runner/NotificationSounds
           for mp3 in android/app/src/main/res/raw/*.mp3; do
             [ -f "$mp3" ] || continue
             base=$(basename "$mp3" .mp3)
             caf="ios/Runner/NotificationSounds/${base}.caf"
-            if [ ! -f "$caf" ]; then
-              echo "Converting $mp3 -> $caf"
-              /usr/bin/afconvert -f caff -d ima4 -c 1 "$mp3" "$caf" || echo "Skipping $mp3 conversion on error"
+            if [ ! -f "$caf" ] || [ "$(stat -f%z "$caf" 2>/dev/null || echo 0)" -gt 350000 ]; then
+              echo "Converting compactly $mp3 -> $caf"
+              tmpwav="$RUNNER_TEMP/${base}_22k.wav"
+              trimmedwav="$RUNNER_TEMP/${base}_trim.wav"
+              /usr/bin/afconvert -f WAVE -d LEI16@22050 -c 1 "$mp3" "$tmpwav"
+              python3 -c "import wave, sys
+with wave.open(sys.argv[1], 'rb') as r:
+    p = r.getparams()
+    frames = r.readframes(int(p.framerate * 29.5))
+with wave.open(sys.argv[2], 'wb') as w:
+    w.setparams(p)
+    w.writeframes(frames)
+" "$tmpwav" "$trimmedwav"
+              /usr/bin/afconvert -f caff -d ima4 -c 1 "$trimmedwav" "$caf" || echo "Skipping $mp3 conversion on error"
+              rm -f "$tmpwav" "$trimmedwav"
             fi
           done
           echo "=== Available notification sounds in ios/Runner/NotificationSounds: ==="
@@ -104,14 +116,14 @@ jobs:
       - name: Build Signed iOS IPA (when signing configured)
         if: env.SIGNED_BUILD_CONFIGURED == 'true'
         run: |
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --no-tree-shake-icons
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --obfuscate --split-debug-info=build/ios/symbols
 
       - name: Build Unsigned iOS App (when signing credentials absent)
         if: env.SIGNED_BUILD_CONFIGURED != 'true'
         run: |
           echo "=== Building release bundle with --no-codesign for testing and sideloading ==="
           export FLUTTER_XCODE_DEVELOPMENT_TEAM="V3N9W8G24A"
-          flutter build ios --release --no-codesign --no-tree-shake-icons
+          flutter build ios --release --no-codesign --obfuscate --split-debug-info=build/ios/symbols
 
       - name: Verify embedded WidgetKit extension
         run: |
@@ -143,17 +155,17 @@ jobs:
 
       - name: Ensure Notification Audio Assets in Runner Bundle
         run: |
-          echo "=== Copying all notification sounds to Runner.app bundle ==="
+          echo "=== Ensuring notification sounds in Runner.app main bundle root ==="
           if [ -d "build/ios/iphoneos/Runner.app" ]; then
             APP_DIR="build/ios/iphoneos/Runner.app"
           elif [ -d "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app" ]; then
             APP_DIR="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
           fi
-          mkdir -p "$APP_DIR/Library/Sounds"
-          mkdir -p "$APP_DIR/NotificationSounds"
-          cp -fv ios/Runner/NotificationSounds/*.caf "$APP_DIR/"
-          cp -fv ios/Runner/NotificationSounds/*.caf "$APP_DIR/Library/Sounds/"
-          cp -fv ios/Runner/NotificationSounds/*.caf "$APP_DIR/NotificationSounds/"
+          for caf in ios/Runner/NotificationSounds/*.caf; do
+            [ -f "$caf" ] || continue
+            dest="$APP_DIR/$(basename "$caf")"
+            cp -fv "$caf" "$dest"
+          done
           echo "=== Notification sounds in Runner.app root: ==="
           ls -la "$APP_DIR"/*.caf
 

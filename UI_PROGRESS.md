@@ -1,3 +1,28 @@
+## Stage R69 — Maximum Bundle Compression (Modern/Old Split APKs & iOS IPA) — v1.3.11 (16 November 2026)
+- **Branch**: `main` · **Tag**: `v1.3.11` · **Version**: `1.0.2+2006`
+- **Root Cause Analysis & Optimizations Implemented**:
+  1. **Chunked XZ QCF Mushaf Fonts (`packages/qcf_quran_plus/`)**:
+     - Replaced `604` individual `.ttf.gz` font files (`65.53 MB`) with `31` LZMA (`preset=9`, 20-page blocks) archives (`qcf_chunk_00.bin.xz`..`qcf_chunk_30.bin.xz`, `48.15 MB` total — **`-17.38 MB` saved across both Android APKs & iOS IPA**), verifying SHA-256 identity across all 604 extracted TrueType fonts.
+     - Updated `QcfFontLoader` (`font_loader_service.dart`) to decompress requested 20-page blocks on background `Isolate.run`, cache extracted `.ttf` pages atomically in `qcf_fonts/`, deduplicate concurrent chunk loads, and updated `generated/assets.dart`.
+  2. **Adhan Audio Compression & Android Deduplication (`lib/core/services/adhan_service.dart`, `android/app/build.gradle.kts`)**:
+     - Re-encoded the 5 oversized MP3 files (`adhan_alafasy`, `adhan_dosari`, `adhan_islam_sobhi`, `adhan_zahrani`, `adhan_maryam_ayah`) identically across `assets/audio/` and `android/app/src/main/res/raw/` to `24 kbps 22050 Hz mono` (`8.21 MB` -> `4.73 MB`).
+     - Added Android raw-resource playback (`android.resource://com.talibilm.app/raw/<name>`) with fallback in `AdhanService` and pruned duplicate `assets/audio/**` entries from `copyFlutterAssets*`/`merge*Assets` during Android packaging (`dup_audio=0` in release APKs, saving the entire remaining `4.73 MB` duplicate while preserving all 17 `res/raw/*.mp3` files for alarms and playback).
+  3. **Android R8 Shrinking & Split Builds (`android/app/build.gradle.kts`, `proguard-rules.pro`)**:
+     - Enabled `isMinifyEnabled = true` and `isShrinkResources = true` (paired with explicit keep rules for `com.talibilm.app.**`, `home_widget`, `audioservice`, `inappwebview`, `syncfusion` PDF viewer, and `res/raw/keep.xml`), excluded redundant `META-INF`/`DebugProbesKt.bin` JVM metadata, and built release APKs with `--split-per-abi --obfuscate --split-debug-info=build/app/outputs/symbols` plus icon tree-shaking (`MaterialIcons-Regular.otf`: `1.65 MB -> 45.2 KB`).
+  4. **iOS IPA Bloat Removal & Notification Audio Fix (`.github/workflows/build_ios.yml`, `pubspec.yaml`)**:
+     - Pruned unused `.svg` masters and build-time branding assets from `pubspec.yaml`, optimized `surah_banner.png` (`372.4 -> 113.9 KB`) and `symbol_on_light/dark.png`, capped `.caf` notification sounds cleanly to `<= 29.5s 22050 Hz mono ima4`, removed 2 redundant `.caf` copies inside `Runner.app`, enabled icon tree-shaking, and added `--obfuscate --split-debug-info`.
+- **Resulting Release Sizes**:
+  - `talib_ilm_modern_phones_release.apk` (`arm64-v8a`): **`116.84 MiB` -> `85.53 MiB` (`89.68 MB`)** (**`-31.31 MiB` saved**, signed by `CN=Talib Ilm App`).
+  - `talib_ilm_old_phones_release.apk` (`armeabi-v7a`): **`117.76 MiB` -> `86.43 MiB` (`90.62 MB`)** (**`-31.33 MiB` saved**, signed by `CN=Talib Ilm App`).
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: `0` issues (`No issues found!`).
+  - `python tool/ui_lint_v2.py --strict`: `OK` (`allow markers used: 8 (cap 10)`).
+  - `flutter test --no-pub test/qcf_chunk_loader_and_adhan_test.dart test/adhan_asset_test.dart test/adhan_full_audio_playback_test.dart test/mushaf_page_viewer_test.dart test/mushaf_single_page_test.dart test/quran_page_test.dart test/surah_banner_test.dart test/runtime_performance_benchmarks_test.dart test/prayer_solar_stations_audit_test.dart test/ilm_audio_connectivity_recovery_test.dart`: `29/29 passed`.
+  - `python tool/verify_android_signing_fail_closed.py` & `python tool/test_release_readiness_checks.py`: `ALL PASSED` (`27/27`).
+  - `flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/app/outputs/symbols --no-pub`: Built signed split APKs + `apksigner verify` passed.
+  - `flutter build apk --debug --no-pub`: Built `app-debug.apk` (`91.0s`).
+- **Status**: Complete & Verified.
+
 ## Stage R68 — Solar Stations Audit (Shuruk/Dhuha/Midnight/Last Third) & Book Audio Connectivity Recovery (16 November 2026)
 - **Branch**: `main`
 - **Root Cause Analysis & Problems Solved**:

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter/services.dart';
@@ -18,10 +19,15 @@ class QcfFontLoader {
 
   static final Map<int, Future<void>> _loadingTasks = {};
   static final Set<int> _loadedPages = {};
+  static final Map<int, Future<Map<int, Uint8List>>> _chunkTasks = {};
+  static final Map<int, Map<int, Uint8List>> _memoryChunkCache = {};
 
   static FontStorageMode _currentMode = FontStorageMode.permanentDisk;
 
   static const int totalPages = 604;
+  static const int chunkSize = 20;
+  static const int _chunkMagic = 0x51434631; // "QCF1"
+  static const int _maxMemoryChunks = 2;
 
   static Directory? _fontDirCache;
   static int _generation = 0;
@@ -246,41 +252,11 @@ class QcfFontLoader {
 
   /// Loads and registers the authentic Medina Mushaf fonts for a single page.
   static Future<void> _loadFontInternal(int pageNumber) async {
-    final fontName = getBaseFontFamily(pageNumber);
-
     Uint8List? fontBytes;
-
-    if (_currentMode == FontStorageMode.permanentDisk) {
-      try {
-        final fontDir = await _getFontDirectory();
-        final fontPath = '${fontDir.path}/$fontName.ttf';
-        final file = File(fontPath);
-
-        if (await file.exists() && await file.length() > 1000) {
-          fontBytes = await file.readAsBytes();
-        } else {
-          final gzipBytes = await _loadCompressedFont(fontName);
-          fontBytes = await Isolate.run(() {
-            final extracted = _extractFont(gzipBytes);
-            try {
-              file.parent.createSync(recursive: true);
-              file.writeAsBytesSync(extracted, flush: true);
-            } catch (_) {}
-            return extracted;
-          });
-        }
-      } catch (_) {
-        fontBytes = null;
-      }
-    }
-
-    if (fontBytes == null) {
-      try {
-        final gzipBytes = await _loadCompressedFont(fontName);
-        fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
-      } catch (_) {
-        return;
-      }
+    try {
+      fontBytes = await _loadRawFontForPage(pageNumber);
+    } catch (_) {
+      fontBytes = null;
     }
 
     final rawBytes = fontBytes;
@@ -329,27 +305,13 @@ class QcfFontLoader {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     final lightFam = getNoTajweedLightFamily(pageNumber);
     final darkFam = getNoTajweedDarkFamily(pageNumber);
-    if (_registeredFamilies.contains(lightFam) && _registeredFamilies.contains(darkFam)) {
+    if (_registeredFamilies.contains(lightFam) &&
+        _registeredFamilies.contains(darkFam)) {
       return;
     }
 
-    final fontName = getBaseFontFamily(pageNumber);
-    Uint8List fontBytes;
-
-    if (_currentMode == FontStorageMode.permanentDisk) {
-      final fontDir = await _getFontDirectory();
-      final fontPath = '${fontDir.path}/$fontName.ttf';
-      final file = File(fontPath);
-      if (await file.exists() && await file.length() > 1000) {
-        fontBytes = await file.readAsBytes();
-      } else {
-        final gzipBytes = await _loadCompressedFont(fontName);
-        fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
-      }
-    } else {
-      final gzipBytes = await _loadCompressedFont(fontName);
-      fontBytes = await Isolate.run(() => _extractFont(gzipBytes));
-    }
+    final fontBytes = await _loadRawFontForPage(pageNumber);
+    if (fontBytes == null) return;
 
     final noTajweedLightBytes = _modifyCpalAllColors(
       Uint8List.fromList(fontBytes),
@@ -382,7 +344,147 @@ class QcfFontLoader {
     }
   }
 
-  /// Loads a compressed font asset from the package bundle.
+  /// Loads raw TrueType font bytes for [pageNumber] via disk cache, XZ chunk bundle,
+  /// or legacy `.ttf.gz` fallback.
+  static Future<Uint8List?> _loadRawFontForPage(int pageNumber) async {
+    final fontName = getBaseFontFamily(pageNumber);
+    Directory? diskDir;
+
+    if (_currentMode == FontStorageMode.permanentDisk) {
+      try {
+        diskDir = await _getFontDirectory();
+        final file = File('${diskDir.path}/$fontName.ttf');
+        if (await file.exists() && await file.length() > 1000) {
+          return await file.readAsBytes();
+        }
+      } catch (_) {
+        diskDir = null;
+      }
+    }
+
+    final chunkIdx = (pageNumber - 1) ~/ chunkSize;
+    final cachedChunk = _memoryChunkCache[chunkIdx];
+    if (cachedChunk != null && cachedChunk.containsKey(pageNumber)) {
+      return cachedChunk[pageNumber];
+    }
+
+    try {
+      final existingTask = _chunkTasks[chunkIdx];
+      final Map<int, Uint8List> pagesMap;
+      if (existingTask != null) {
+        pagesMap = await existingTask;
+      } else {
+        final task = _extractChunkToMap(chunkIdx, diskDir?.path);
+        _chunkTasks[chunkIdx] = task;
+        try {
+          pagesMap = await task;
+        } finally {
+          _chunkTasks.remove(chunkIdx);
+        }
+      }
+      final bytes = pagesMap[pageNumber];
+      if (bytes != null) {
+        return bytes;
+      }
+    } catch (_) {
+      // Fallback below to legacy single-page `.ttf.gz` if chunk asset is absent.
+    }
+
+    try {
+      final gzipBytes = await _loadCompressedFont(fontName);
+      final fontBytes = await Isolate.run(() {
+        final extracted = _extractFont(gzipBytes);
+        if (diskDir != null) {
+          try {
+            final file = File('${diskDir.path}/$fontName.ttf');
+            file.parent.createSync(recursive: true);
+            file.writeAsBytesSync(extracted, flush: true);
+          } catch (_) {}
+        }
+        return extracted;
+      });
+      return fontBytes;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Map<int, Uint8List>> _extractChunkToMap(
+    int chunkIdx,
+    String? diskDirPath,
+  ) async {
+    final chunkId = chunkIdx.toString().padLeft(2, '0');
+    final data = await rootBundle.load(
+      'packages/qcf_quran_plus/assets/fonts/qcf_tajweed/qcf_chunk_$chunkId.bin.xz',
+    );
+    final xzBytes = data.buffer.asUint8List(
+      data.offsetInBytes,
+      data.lengthInBytes,
+    );
+    final pagesMap = await Isolate.run(
+      () => _unpackChunkArchive(xzBytes, diskDirPath),
+    );
+    if (diskDirPath == null || _currentMode == FontStorageMode.memoryOnly) {
+      if (_memoryChunkCache.length >= _maxMemoryChunks) {
+        _memoryChunkCache.remove(_memoryChunkCache.keys.first);
+      }
+      _memoryChunkCache[chunkIdx] = pagesMap;
+    }
+    return pagesMap;
+  }
+
+  static Map<int, Uint8List> _unpackChunkArchive(
+    Uint8List xzBytes,
+    String? diskDirPath,
+  ) {
+    final raw = Uint8List.fromList(XZDecoder().decodeBytes(xzBytes));
+    final bd = ByteData.sublistView(raw);
+    if (raw.length < 8) {
+      throw const FormatException('Corrupt QCF chunk header');
+    }
+    final magic = bd.getUint32(0, Endian.little);
+    if (magic != _chunkMagic) {
+      throw FormatException('Invalid QCF chunk magic: $magic');
+    }
+    final count = bd.getUint32(4, Endian.little);
+    var offset = 8;
+    final out = <int, Uint8List>{};
+
+    if (diskDirPath != null) {
+      try {
+        Directory(diskDirPath).createSync(recursive: true);
+      } catch (_) {}
+    }
+
+    for (int i = 0; i < count; i++) {
+      if (offset + 8 > raw.length) {
+        throw const FormatException('Truncated QCF chunk entry header');
+      }
+      final pageNum = bd.getUint32(offset, Endian.little);
+      final byteLen = bd.getUint32(offset + 4, Endian.little);
+      offset += 8;
+      if (offset + byteLen > raw.length) {
+        throw const FormatException('Truncated QCF chunk entry payload');
+      }
+      final fontData = raw.sublist(offset, offset + byteLen);
+      offset += byteLen;
+      out[pageNum] = fontData;
+
+      if (diskDirPath != null) {
+        try {
+          final fontName =
+              'QCF4${pageNum.toString().padLeft(3, '0')}_COLOR-Regular';
+          final outFile = File('$diskDirPath/$fontName.ttf');
+          if (!outFile.existsSync() || outFile.lengthSync() != byteLen) {
+            outFile.writeAsBytesSync(fontData, flush: true);
+          }
+        } catch (_) {}
+      }
+    }
+    return out;
+  }
+
+  /// Loads a legacy compressed font asset from the package bundle.
   static Future<Uint8List> _loadCompressedFont(String fontName) async {
     final data = await rootBundle.load(
       'packages/qcf_quran_plus/assets/fonts/qcf_tajweed/$fontName.ttf.gz',
@@ -390,7 +492,7 @@ class QcfFontLoader {
     return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   }
 
-  /// Decompresses a GZip-compressed font payload to raw TrueType bytes.
+  /// Decompresses a legacy GZip-compressed font payload to raw TrueType bytes.
   static Uint8List _extractFont(Uint8List gzipBytes) {
     final decompressed = const GZipDecoder().decodeBytes(gzipBytes);
     return Uint8List.fromList(decompressed);
@@ -527,5 +629,7 @@ class QcfFontLoader {
     _fontDirCache = null;
     _loadedPages.clear();
     _loadingTasks.clear();
+    _chunkTasks.clear();
+    _memoryChunkCache.clear();
   }
 }

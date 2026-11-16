@@ -22,3 +22,13 @@
   @com.google.gson.annotations.SerializedName <fields>;
 }
 -dontwarn com.google.gson.**
+
+# Preserve native Kotlin classes (widgets, receivers, services) & Flutter engine bridges
+-keep class com.talibilm.app.** { *; }
+-keep class es.antonborri.home_widget.** { *; }
+-keep class com.ryanheise.** { *; }
+-keep class com.pichillilorenzo.flutter_inappwebview_android.** { *; }
+-keep class com.syncfusion.flutter.pdfviewer.** { *; }
+-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**

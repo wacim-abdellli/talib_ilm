@@ -104,18 +104,15 @@ class AdhanService {
 
       final isQuranAyah = effectiveSound == AdhanSound.maryamAyah ||
           mode == PrayerNotificationMode.maryamAyah;
-      final source = AudioSource.asset(
-        assetPath,
-        tag: MediaItem(
-          id: assetPath,
-          album: isQuranAyah ? 'تنبيه قرآني للصلاة' : 'أذان الصلاة',
-          title: isQuranAyah
-              ? 'سورة مريم (آية 59) · ناصر القطامي'
-              : (prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة'),
-          artist: isQuranAyah ? 'الشيخ ناصر القطامي' : 'طالب العلم',
-          artUri: Uri.parse(
-            'android.resource://com.talibilm.app/drawable/quran_artwork',
-          ),
+      final tag = MediaItem(
+        id: assetPath,
+        album: isQuranAyah ? 'تنبيه قرآني للصلاة' : 'أذان الصلاة',
+        title: isQuranAyah
+            ? 'سورة مريم (آية 59) · ناصر القطامي'
+            : (prayerName != null ? 'أذان صلاة $prayerName' : 'أذان الصلاة'),
+        artist: isQuranAyah ? 'الشيخ ناصر القطامي' : 'طالب العلم',
+        artUri: Uri.parse(
+          'android.resource://com.talibilm.app/drawable/quran_artwork',
         ),
       );
 
@@ -125,6 +122,25 @@ class AdhanService {
         await _player.stop();
       } catch (_) {}
 
+      final isAndroid =
+          !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+      if (isAndroid) {
+        final rawName = assetPath.split('/').last.replaceAll('.mp3', '');
+        try {
+          final rawSource = AudioSource.uri(
+            Uri.parse('android.resource://com.talibilm.app/raw/$rawName'),
+            tag: tag,
+          );
+          await _player.setAudioSource(rawSource);
+          await _player.setVolume(normalizedVolume);
+          await _player.play();
+          return;
+        } catch (rawErr) {
+          debugPrint('AdhanService raw URI fallback ($rawName): $rawErr');
+        }
+      }
+
+      final source = AudioSource.asset(assetPath, tag: tag);
       await _player.setAudioSource(source);
       await _player.setVolume(normalizedVolume);
       await _player.play();

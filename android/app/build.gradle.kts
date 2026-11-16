@@ -102,6 +102,8 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -115,6 +117,34 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+        }
+        resources {
+            excludes += listOf(
+                "/META-INF/{AL2.0,LGPL2.1}",
+                "META-INF/*.kotlin_module",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "DebugProbesKt.bin",
+            )
+        }
+    }
+}
+
+// On Android, Adhan audio already ships in res/raw/ for notifications and raw ExoPlayer playback.
+// Remove the duplicate flutter_assets/assets/audio/ copy from Android builds while preserving it for iOS & tests.
+tasks.configureEach {
+    if (name.startsWith("copyFlutterAssets") ||
+        (name.startsWith("merge") && name.endsWith("Assets"))
+    ) {
+        doLast {
+            outputs.files.forEach { dir ->
+                if (dir.isDirectory) {
+                    project.delete(project.fileTree(dir) {
+                        include("assets/audio/**")
+                        include("flutter_assets/assets/audio/**")
+                    })
+                }
+            }
         }
     }
 }

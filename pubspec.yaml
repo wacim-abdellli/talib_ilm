@@ -1,7 +1,7 @@
 name: talib_ilm
 description: "A comprehensive Arabic Islamic knowledge application."
 publish_to: 'none'
-version: 1.0.1+2005
+version: 1.0.2+2006
 
 environment:
   sdk: ^3.10.4
@@ -86,7 +86,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/branding/
+    - assets/branding/symbol_on_light.png
+    - assets/branding/lockup_on_light.png
+    - assets/branding/symbol_on_dark.png
+    - assets/branding/lockup_on_dark.png
     - assets/data/
     - assets/data/quran/
     - assets/audio/
