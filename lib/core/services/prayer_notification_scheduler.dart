@@ -11,6 +11,8 @@ import 'athkar_notification_scheduler.dart';
 import 'prayer_notification_details_builder.dart';
 import 'schedule_outcome.dart';
 
+part 'prayer_notification_cleanup.dart';
+
 /// Handles prayer-specific notification scheduling, instant alerts, and cancellations.
 class PrayerNotificationScheduler {
   final FlutterLocalNotificationsPlugin _plugin;
@@ -391,66 +393,25 @@ class PrayerNotificationScheduler {
     required String prayerName,
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
-  }) async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
-    }
-    await _ensureInitialized();
-
-    final details = PrayerNotificationDetailsBuilder.buildPrayerDetails(
-      mode: mode,
-      sound: sound,
-      prayerName: prayerName,
-    );
-    final cleanPrayerName = prayerName.replaceAll('صلاة ', '').trim();
-    final isJumua =
-        cleanPrayerName == 'الجمعة' || cleanPrayerName.contains('جمعة');
-    final title = isJumua
-        ? 'حان الآن موعد أذان صلاة الجمعة'
-        : 'حان الآن موعد أذان صلاة $cleanPrayerName';
-    final body = cleanPrayerName.contains('فجر')
-        ? 'الصلاة خيرٌ من النوم · حان وقت الصلاة'
-        : 'حي على الصلاة · حي على الفلاح';
-
-    await _plugin.show(
-      id,
-      title,
-      body,
-      details,
-      payload: 'prayer_${prayerName.trim()}',
-    );
-  }
+  }) =>
+      _showInstantPrayerAlertImpl(
+        id: id,
+        prayerName: prayerName,
+        mode: mode,
+        sound: sound,
+      );
 
   /// Triggers an immediate test notification right now so the user can verify sound and alerts.
   Future<void> showInstantTestNotification({
     required String prayerName,
     required PrayerNotificationMode mode,
     AdhanSound sound = AdhanSound.qatami,
-  }) async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
-    }
-    await _ensureInitialized();
-    await _requestPermissions();
-
-    final details = PrayerNotificationDetailsBuilder.buildPrayerDetails(
-      mode: mode,
-      sound: sound,
-      prayerName: prayerName,
-    );
-    final title = 'حان الآن وقت صلاة $prayerName (إشعار تجريبي)';
-    final body = prayerName.contains('فجر')
-        ? 'الصلاة خير من النوم (النمط: ${PrayerNotificationDetailsBuilder.modeLabel(mode)})'
-        : 'حي على الصلاة.. حي على الفلاح (النمط: ${PrayerNotificationDetailsBuilder.modeLabel(mode)})';
-
-    await _plugin.show(
-      9999,
-      title,
-      body,
-      details,
-      payload: 'prayer_test_${prayerName.trim()}',
-    );
-  }
+  }) =>
+      _showInstantTestNotificationImpl(
+        prayerName: prayerName,
+        mode: mode,
+        sound: sound,
+      );
 
   /// Schedules a test notification after [seconds] (e.g. 5 seconds)
   /// allowing the user to minimize the app or lock the screen to test outside the app.
@@ -530,105 +491,16 @@ class PrayerNotificationScheduler {
   }
 
   /// Dismisses active prayer alerts without canceling future scheduled alarms.
-  Future<void> cancelActivePrayerAlertsOnly() async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
-    }
-    for (int i = 700; i <= 710; i++) {
-      await _plugin.cancel(i);
-    }
-    for (int i = 750; i <= 760; i++) {
-      await _plugin.cancel(i);
-    }
-
-    // Scheduled alerts use IDs in the seven-day schedule namespace. Cancel
-    // only IDs Android reports as already active, never pending alarms.
-    try {
-      final activeNotifications = await _plugin.getActiveNotifications();
-      final activeAdhanIds =
-          activeNotifications
-              .where(isActiveAdhanNotification)
-              .map((notification) => notification.id)
-              .whereType<int>()
-              .toSet()
-            ..removeWhere((id) => id >= 700 && id <= 710);
-      for (final id in activeAdhanIds) {
-        await _plugin.cancel(id);
-      }
-    } catch (error) {
-      debugPrint('Unable to inspect active prayer notifications: $error');
-    }
-  }
+  Future<void> cancelActivePrayerAlertsOnly() =>
+      _cancelActivePrayerAlertsOnlyImpl();
 
   @visibleForTesting
-  static bool isActiveAdhanNotification(ActiveNotification notification) {
-    final id = notification.id;
-    final payload = notification.payload;
-    if (id == null || payload == null || !payload.startsWith('prayer_')) {
-      return false;
-    }
-    if (payload.startsWith('prayer_pre_') ||
-        payload.startsWith('prayer_test_')) {
-      return false;
-    }
-
-    final isInstantAlert = id >= 700 && id <= 710;
-    final isLegacyAlert = id >= 100 && id <= 105;
-    final scheduleOffset = id - 1000;
-    final isScheduledAlert =
-        scheduleOffset >= 0 &&
-        scheduleOffset < 700 &&
-        scheduleOffset % 100 <= 5;
-    return isInstantAlert || isLegacyAlert || isScheduledAlert;
-  }
+  static bool isActiveAdhanNotification(ActiveNotification notification) =>
+      _isActiveAdhanNotificationImpl(notification);
 
   /// Cancels all scheduled prayer-related notification slots across the 7-day rolling schedule,
   /// strictly preserving other notification categories like Athkar reminders (301, 302, 303),
   /// and preserving any actively sounding prayer notification IDs.
-  Future<void> cancelPrayerNotificationsOnly({Set<int>? preserveIds}) async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      return;
-    }
-    // Cancel 7-day rolling schedule IDs:
-    // Adhans: 1000..1605 (base: 1000 + d * 100 + i)
-    // Pre-prayers: 2000..2605 (base: 2000 + d * 100 + i)
-    // Iqamas: 3000..3605 (base: 3000 + d * 100 + i)
-    // Friday Kahf: 4000..4600 (base: 4000 + d * 100)
-    for (var d = 0; d < 7; d++) {
-      for (var i = 0; i <= 5; i++) {
-        final adhanId = 1000 + (d * 100) + i;
-        if (preserveIds == null || !preserveIds.contains(adhanId)) {
-          await _plugin.cancel(adhanId);
-        }
-        final preId = 2000 + (d * 100) + i;
-        if (preserveIds == null || !preserveIds.contains(preId)) {
-          await _plugin.cancel(preId);
-        }
-        final iqamaId = 3000 + (d * 100) + i;
-        if (preserveIds == null || !preserveIds.contains(iqamaId)) {
-          await _plugin.cancel(iqamaId);
-        }
-      }
-      final kahfId = 4000 + (d * 100);
-      if (preserveIds == null || !preserveIds.contains(kahfId)) {
-        await _plugin.cancel(kahfId);
-      }
-    }
-
-    // Cancel legacy IDs (100..299)
-    for (int i = 100; i <= 299; i++) {
-      if (preserveIds != null && preserveIds.contains(i)) continue;
-      await _plugin.cancel(i);
-    }
-    // Cancel instant alert IDs (700..710)
-    for (int i = 700; i <= 710; i++) {
-      if (preserveIds != null && preserveIds.contains(i)) continue;
-      await _plugin.cancel(i);
-    }
-    // Cancel instant pre-prayer alert IDs (750..760)
-    for (int i = 750; i <= 760; i++) {
-      if (preserveIds != null && preserveIds.contains(i)) continue;
-      await _plugin.cancel(i);
-    }
-  }
+  Future<void> cancelPrayerNotificationsOnly({Set<int>? preserveIds}) =>
+      _cancelPrayerNotificationsOnlyImpl(preserveIds: preserveIds);
 }

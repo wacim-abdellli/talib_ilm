@@ -1,3 +1,26 @@
+## Stage R72 — Core Service Modularization (<600 Lines Split, Stage 3 of Hardening Plan) (16 November 2026)
+- **Branch**: `main` · **Prior Stage 2 CI (`03eb8e7`)**: `Build iOS App` (`success`), `Verify Release Readiness` running in CI
+- **Modularizations Implemented (Zero public API / behavior changes)**:
+  1. **Quran Audio Engine Split (`lib/features/quran/data/services/quran_audio_service.dart`: `1,584 -> 487` lines)**:
+     - Extracted `AudioRepeatMode` & `HifdhRangeConfig` into [`hifdh_range_config.dart`](file:///d:/Projects/talib_ilm-main/lib/features/quran/data/models/hifdh_range_config.dart) (`31` lines) and re-exported cleanly from `quran_audio_service.dart`.
+     - Extracted unified forward/backward surah queue traversal, URL builder, and notification metadata builder into [`quran_surah_queue_resolver.dart`](file:///d:/Projects/talib_ilm-main/lib/features/quran/data/services/quran_surah_queue_resolver.dart) (`172` lines), replacing duplicate `_resolveNextSurah` & `_resolvePreviousSurah` traversal branches with parameterized `step` resolution + new unit tests in [`quran_surah_queue_resolver_test.dart`](file:///d:/Projects/talib_ilm-main/test/quran_surah_queue_resolver_test.dart).
+     - Split private Hifdh/position/sleep-timer logic into [`quran_audio_service_hifdh.dart`](file:///d:/Projects/talib_ilm-main/lib/features/quran/data/services/quran_audio_service_hifdh.dart) (`270` lines), playback-mode orchestration & extracted `_prepareFullSurahState` into [`quran_audio_service_modes.dart`](file:///d:/Projects/talib_ilm-main/lib/features/quran/data/services/quran_audio_service_modes.dart) (`344` lines), and audio source loading/completion/retry engine into [`quran_audio_service_playback.dart`](file:///d:/Projects/talib_ilm-main/lib/features/quran/data/services/quran_audio_service_playback.dart) (`429` lines).
+  2. **Quran Downloader Split (`quran_audio_downloader.dart`: `764 -> 545` lines)**:
+     - Extracted single-track streaming downloader, pause/cancel/testing state handlers, and progress mutators into [`quran_audio_downloader_worker.dart`](file:///d:/Projects/talib_ilm-main/lib/features/quran/data/services/quran_audio_downloader_worker.dart) (`297` lines).
+  3. **Core Infrastructure Splits (`notification_service`, `prayer_notification_scheduler`, `location_service`, `home_widget_snapshot`)**:
+     - `notification_service.dart` (`739 -> 524` lines) + [`notification_service_setup.dart`](file:///d:/Projects/talib_ilm-main/lib/core/services/notification_service_setup.dart) (`237` lines) for permission/channel health & timezone resolution.
+     - `prayer_notification_scheduler.dart` (`634 -> 506` lines) + [`prayer_notification_cleanup.dart`](file:///d:/Projects/talib_ilm-main/lib/core/services/prayer_notification_cleanup.dart) (`160` lines) for instant alerts & active/scheduled notification cancellation (retaining the `ui-lint: allow` marker in `prayer_notification_scheduler.dart`).
+     - `location_service.dart` (`634 -> 553` lines) + [`location_service_resolution.dart`](file:///d:/Projects/talib_ilm-main/lib/core/services/location_service_resolution.dart) (`110` lines) for coordinate-to-city/country resolution.
+     - `home_widget_snapshot.dart` (`625 -> 219` lines) + [`home_widget_snapshot_serializer.dart`](file:///d:/Projects/talib_ilm-main/lib/core/services/home_widget_snapshot_serializer.dart) (`522` lines) for full JSON & iOS bridge widget snapshot persistence.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: `No issues found!`.
+  - `python tool/ui_lint_v2.py --strict`: `OK` (`allow markers used: 8 (cap 10)`).
+  - Targeted Audio/Notifications/Location/Widget suite: **`230 / 230 passed`** across `29` files.
+  - **All `133` non-golden `test/*_test.dart` files**: **`851 / 851 passed`** (`392` Batch 1 + `459` Batch 2, `0` failures).
+  - `python tool/test_release_readiness_checks.py` (`27/27 OK`) & `python tool/verify_android_signing_fail_closed.py` (`ALL PASSED`).
+  - `flutter build apk --debug --no-pub`: Built `build\app\outputs\flutter-apk\app-debug.apk` (`33.5s`).
+- **Status**: Stage 3 Complete & Verified.
+
 ## Stage R71 — Privacy-First Local Observability & Diagnostics (Stage 2 of Hardening Plan) (16 November 2026)
 - **Branch**: `main` · **Prior Stage 1 CI (`f4d4e93`)**: `Verify Release Readiness` (`success`) & `Build iOS App` (`success`)
 - **Changes Implemented**:
