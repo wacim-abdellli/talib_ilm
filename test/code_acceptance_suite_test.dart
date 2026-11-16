@@ -526,6 +526,7 @@ void main() {
       expect(recordingNotif.scheduledPrayerIds.length, equals(34)); // Fajr past at 12:00 -> 4 remaining today + 30 next 6 days
 
       // 3. Native widget snapshot atomic versioning across all 10 keys (C11, C12, C22)
+      await prefs.remove(HomeWidgetSnapshot.themeModeKey);
       final eval = PrayerWidgetStateEvaluator.evaluate(
         now: DateTime(2026, 10, 24, 15, 0),
         all: day.prayers,

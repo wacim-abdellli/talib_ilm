@@ -50,6 +50,8 @@ class _PrayerPageState extends State<PrayerPage> {
   PrayerCountdownController? _countdownController;
   PrayerTimesDay? _cachedDay;
   AdhanSettings? _adhanSettings;
+  Timer? _locationDebounceTimer;
+  Completer<void>? _locationDebounceCompleter;
 
   @override
   void initState() {
@@ -81,13 +83,29 @@ class _PrayerPageState extends State<PrayerPage> {
 
   @override
   void dispose() {
+    _locationDebounceTimer?.cancel();
+    if (_locationDebounceCompleter != null &&
+        !_locationDebounceCompleter!.isCompleted) {
+      _locationDebounceCompleter!.complete();
+    }
     LocationService.onLocationChanged.removeListener(_onLocationChanged);
     _countdownController?.dispose();
     super.dispose();
   }
 
   Future<LocationInfo> _loadLocation() async {
-    await Future.delayed(AppMotion.debounce);
+    _locationDebounceTimer?.cancel();
+    if (_locationDebounceCompleter != null &&
+        !_locationDebounceCompleter!.isCompleted) {
+      _locationDebounceCompleter!.complete();
+    }
+    final completer = Completer<void>();
+    _locationDebounceCompleter = completer;
+    _locationDebounceTimer = Timer(AppMotion.debounce, () {
+      if (!completer.isCompleted) completer.complete();
+    });
+    await completer.future;
+    if (!mounted) return const LocationInfo(city: 'مكة المكرمة', isManual: false);
     try {
       final manual = await _locationService.getManualLocation();
       final location = await _locationService.getLocation();

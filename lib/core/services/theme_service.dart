@@ -1,3 +1,6 @@
+import 'dart:async' show unawaited;
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -72,15 +75,20 @@ class ThemeService extends ChangeNotifier {
       ThemeMode.system => 'auto',
     };
     await prefs.setString(HomeWidgetSnapshot.themeModeKey, widgetModeName);
-    try {
-      await HomeWidgetSnapshot.writeWidgetValue<bool>('theme_user_selected', true);
-      await HomeWidgetSnapshot.writeWidgetValue<String>(
-        HomeWidgetSnapshot.themeModeKey,
-        widgetModeName,
-      );
-      HomeWidgetService.invalidateCache();
-      await HomeWidgetService.updateAllWidgets(force: true);
-    } catch (_) {}
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      try {
+        await HomeWidgetSnapshot.writeWidgetValue<bool>(
+          'theme_user_selected',
+          true,
+        );
+        await HomeWidgetSnapshot.writeWidgetValue<String>(
+          HomeWidgetSnapshot.themeModeKey,
+          widgetModeName,
+        );
+        HomeWidgetService.invalidateCache();
+        unawaited(HomeWidgetService.updateAllWidgets(force: true));
+      } catch (_) {}
+    }
   }
 
   /// Toggle between light and dark (ignores system)

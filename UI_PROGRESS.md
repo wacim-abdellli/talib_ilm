@@ -1,3 +1,22 @@
+## Stage R70 — Full Test Suite & CI Gate 3 Stabilization (Stage 1 of Hardening Plan) (16 November 2026)
+- **Branch**: `main`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Headless SQLite Fallback (`shamela_download_manager.dart`)**:
+     - `AppShell._scheduleIdleTabPrewarm()` mounted `IlmPage` -> `ShamelaDownloadManager.getDownloadedBooksMap()` -> `ShamelaService.getDatabase()`, causing unhandled `StateError: databaseFactory not initialized` across 14 widget tests (`notification_router_test.dart` [13] and `code_acceptance_suite_test.dart` Journey 2 [1]). Guarded DB query cleanly so unavailable SQLite gracefully falls back to `SharedPreferences` badges.
+  2. **Uncancelled Location Debounce Timer (`prayer_page.dart`)**:
+     - Replaced uncancelled `Future.delayed(AppMotion.debounce)` inside `_loadLocation()` with a tracked `Timer? _locationDebounceTimer` and `Completer<void>?` cancelled & completed cleanly inside `dispose()`, eliminating pending-timer teardown failures in widget tests.
+  3. **Instant Theme Toggle & Deadlock Elimination (`theme_service.dart`, `home_widget_service.dart`)**:
+     - `ThemeService.setThemeMode()` previously blocked callers awaiting `HomeWidgetService.updateAllWidgets(force: true)` and invoked `HomeWidget.renderFlutterWidget()` / `8.48 MB` `SalafGemsRepository` loading on non-mobile platforms, causing `ilm_reading_tracker_and_theme_sync_test.dart` to deadlock (`10m` timeout in `FakeAsync`). Made `HomeWidget` channel writes & widget sync mobile-only (`Platform.isAndroid || Platform.isIOS`) + `unawaited`, and skipped `HomeWidget.renderFlutterWidget()` on non-mobile platforms (cutting that test from 10m timeout to `< 1s`).
+  4. **Test Isolation (`code_acceptance_suite_test.dart`)**:
+     - Cleared leftover `HomeWidgetSnapshot.themeModeKey` before Journey 7's `preResolvedDark: true` assertion.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: `No issues found!`.
+  - `python tool/ui_lint_v2.py --strict`: `OK` (`allow markers used: 8 (cap 10)`).
+  - Full functional & widget suite (all 114 non-golden `test/*_test.dart` files): **`846 / 846 passed`** (`390` Batch 1 + `456` Batch 2, `0` failures, `0` timeouts). *(Note: `test/golden/` pixel baselines differ ~0.55% on Windows Skia locally and auto-skip pixel comparison on headless Linux CI in `golden_test_helper.dart` while verifying layout/overflow.)*
+  - `python tool/test_release_readiness_checks.py` (`27/27 OK`) & `python tool/verify_android_signing_fail_closed.py` (`ALL PASSED`).
+  - `flutter build apk --debug --no-pub`: Built `app-debug.apk` (`31.5s`).
+- **Status**: Stage 1 Complete & Verified.
+
 ## Stage R69 — Maximum Bundle Compression (Modern/Old Split APKs & iOS IPA) — v1.3.12 (16 November 2026)
 - **Branch**: `main` · **Tag**: `v1.3.12` · **Version**: `1.0.2+2006`
 - **Root Cause Analysis & Optimizations Implemented**:

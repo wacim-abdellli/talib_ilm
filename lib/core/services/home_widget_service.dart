@@ -228,6 +228,9 @@ class HomeWidgetService {
       }
       _lastRenderKey = renderKey;
 
+      // Native widget offscreen bitmap rendering only exists on Android & iOS
+      if (!Platform.isAndroid && !Platform.isIOS) return;
+
       final resolvedSize = Size(targetW.toDouble(), targetH.toDouble());
 
       // Render the widget to PNG in application storage with optimal 1.5 pixel ratio (crisp, fast, safe for Android Binder)
@@ -473,8 +476,8 @@ class HomeWidgetService {
         );
         if (op < _latestOperation) return;
 
-        // iOS uses WidgetKit + App Group snapshot directly without Android PNG rendering
-        if (Platform.isIOS) return;
+        // iOS uses WidgetKit + App Group snapshot directly; non-mobile platforms have no home widgets
+        if (!Platform.isAndroid) return;
 
         await updateRibbon(
           prayerDay: day,

@@ -141,18 +141,21 @@ class ShamelaDownloadManager {
       map[id] = prefs.getBool('shamela_downloaded_$id') == true;
     }
 
-    final db = await ShamelaService.getDatabase();
-    final rows = await db.rawQuery(
-      'SELECT book_id, COUNT(page_num) as cnt FROM ${ShamelaService.tableNamePages} '
-      'WHERE content IS NOT NULL AND length(trim(content)) > 0 '
-      'GROUP BY book_id',
-    );
-
     final counts = <int, int>{};
-    for (final row in rows) {
-      final bId = row['book_id'] as int;
-      final cnt = row['cnt'] as int;
-      counts[bId] = cnt;
+    try {
+      final db = await ShamelaService.getDatabase();
+      final rows = await db.rawQuery(
+        'SELECT book_id, COUNT(page_num) as cnt FROM ${ShamelaService.tableNamePages} '
+        'WHERE content IS NOT NULL AND length(trim(content)) > 0 '
+        'GROUP BY book_id',
+      );
+      for (final row in rows) {
+        final bId = row['book_id'] as int;
+        final cnt = row['cnt'] as int;
+        counts[bId] = cnt;
+      }
+    } catch (_) {
+      // Fallback to SharedPreferences marks when database is unavailable (e.g. headless tests)
     }
 
     for (final book in ShamelaService.curatedClassics) {
