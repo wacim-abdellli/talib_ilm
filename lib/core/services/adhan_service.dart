@@ -8,6 +8,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import '../../app/constants/app_assets.dart';
 import 'adhan_settings_service.dart';
 import 'audio_coordinator.dart';
+import 'local_diagnostics_service.dart';
 
 export 'package:just_audio/just_audio.dart' show PlayerState;
 
@@ -137,6 +138,12 @@ class AdhanService {
           return;
         } catch (rawErr) {
           debugPrint('AdhanService raw URI fallback ($rawName): $rawErr');
+          LocalDiagnosticsService().record(
+            category: 'audio',
+            severity: 'warn',
+            message: 'Adhan raw resource fallback ($rawName)',
+            error: rawErr,
+          );
         }
       }
 
@@ -144,8 +151,15 @@ class AdhanService {
       await _player.setAudioSource(source);
       await _player.setVolume(normalizedVolume);
       await _player.play();
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('AdhanService.play error: $e');
+      LocalDiagnosticsService().record(
+        category: 'audio',
+        severity: 'error',
+        message: 'AdhanService play failed',
+        error: e,
+        stackTrace: stack,
+      );
     }
   }
 

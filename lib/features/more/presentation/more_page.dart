@@ -15,6 +15,7 @@ import '../../quran/presentation/quran_audio_downloads_page.dart';
 import 'credits_and_licenses_page.dart';
 import 'dhikr_moment_settings_sheet.dart';
 import '../../salaf_gems/presentation/salaf_gems_explorer_page.dart';
+import 'widgets/diagnostics_report_sheet.dart';
 import 'widgets/more_page_header.dart';
 import 'widgets/more_section_card.dart';
 import 'widgets/theme_selector_sheet.dart';
@@ -392,13 +393,51 @@ class _MorePageState extends State<MorePage> {
                                                   TextDecoration.underline,
                                               decorationColor: palette.border,
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                           ),
+                                         ],
+                                       ),
+                                     ),
+                                   ),
+                                 ),
+                                 const SizedBox(height: AppSpace.xs),
+                                 Material(
+                                   color: Colors.transparent,
+                                   child: InkWell(
+                                     onTap: () => DiagnosticsReportSheet.show(context),
+                                     borderRadius: AppRadius.pillRadius,
+                                     child: ConstrainedBox(
+                                       constraints: const BoxConstraints(
+                                         minHeight: AppSize.tap,
+                                       ),
+                                       child: Padding(
+                                         padding: const EdgeInsets.symmetric(
+                                           horizontal: AppSpace.md,
+                                           vertical: AppSpace.xs,
+                                         ),
+                                         child: Row(
+                                           mainAxisSize: MainAxisSize.min,
+                                           children: [
+                                             Icon(
+                                               Icons.health_and_safety_outlined,
+                                               size: AppIcon.xs,
+                                               color: palette.textMuted,
+                                             ),
+                                             const SizedBox(width: AppSpace.xs),
+                                             Text(
+                                               'التشخيص والدعم الفني',
+                                               style: textTheme.caption.copyWith(
+                                                 color: palette.textMuted,
+                                                 decoration: TextDecoration.underline,
+                                                 decorationColor: palette.border,
+                                               ),
+                                             ),
+                                           ],
+                                         ),
+                                       ),
+                                     ),
+                                   ),
+                                 ),
+                               ],
                             ),
                           ),
                         ),

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 
+import 'local_diagnostics_service.dart';
+
 /// Lightweight, resilient service to monitor device internet connectivity.
 /// Notifies UI when device enters or leaves offline state (e.g. airplane mode, no signal)
 /// and refreshes cleanly when returning to the foreground or when real requests succeed.
@@ -57,6 +59,11 @@ class OfflineConnectivityService with WidgetsBindingObserver {
     if (overrideForTesting != null) return;
     if (isOfflineNotifier.value) {
       isOfflineNotifier.value = false;
+      LocalDiagnosticsService().record(
+        category: 'connectivity',
+        severity: 'info',
+        message: 'Network restored via verified live transfer',
+      );
     }
   }
 
@@ -93,6 +100,11 @@ class OfflineConnectivityService with WidgetsBindingObserver {
     final offline = results.isEmpty || !hasConnection;
     if (isOfflineNotifier.value != offline) {
       isOfflineNotifier.value = offline;
+      LocalDiagnosticsService().record(
+        category: 'connectivity',
+        severity: offline ? 'warn' : 'info',
+        message: offline ? 'Connectivity offline ($results)' : 'Connectivity online ($results)',
+      );
     }
   }
 

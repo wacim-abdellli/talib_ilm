@@ -29,6 +29,7 @@ class AppPolicy {
 
   // Periodic Intervals & Polling
   static const Duration oneSecond = Duration(seconds: 1);
+  static const Duration diagnosticsThrottle = Duration(seconds: 2);
   static const Duration pollingActive = Duration(seconds: 10);
   static const Duration pollingStandard = Duration(seconds: 30);
   static const Duration compassFallback = Duration(milliseconds: 600);

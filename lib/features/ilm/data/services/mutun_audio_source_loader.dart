@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_policy.dart';
+import '../../../../core/services/local_diagnostics_service.dart';
 import '../../../../core/services/offline_connectivity_service.dart';
 import '../catalogs/mutun_audio_catalog.dart';
 
@@ -261,6 +262,12 @@ class MutunAudioSourceLoader {
         );
       } catch (urlErr) {
         debugPrint('Direct setUrl failed ($effectiveUrl): $urlErr');
+        LocalDiagnosticsService().record(
+          category: 'audio',
+          severity: 'warn',
+          message: 'Book audio load failed for ${host ?? effectiveUrl}',
+          error: urlErr,
+        );
         if (host != null &&
             fallbackCandidate != null &&
             (_isTlsCertificateError(sourceErr) ||

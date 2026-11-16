@@ -1,3 +1,22 @@
+## Stage R71 — Privacy-First Local Observability & Diagnostics (Stage 2 of Hardening Plan) (16 November 2026)
+- **Branch**: `main` · **Prior Stage 1 CI (`f4d4e93`)**: `Verify Release Readiness` (`success`) & `Build iOS App` (`success`)
+- **Changes Implemented**:
+  1. **Bounded Local Diagnostics Ring Buffer (`lib/core/services/local_diagnostics_service.dart`, `lib/app/theme/app_policy.dart`)**:
+     - Implemented offline-only `LocalDiagnosticsService` (`maxEntries = 80`) backed by `SharedPreferences` (`local_diagnostics_ring_v1`) with `ValueNotifier<int> eventCountNotifier`, zero network calls or PII, GPS coordinate redaction via `replaceAllMapped` (`latitude/longitude/lat/lon=[redacted]`), startup persistence serialization (`_loadInFlight` + pre-save load barrier preventing history loss or event duplication), and tokenized `AppPolicy.diagnosticsThrottle` (`2s`).
+  2. **Global Error & Resilience Hooks (`lib/main.dart`, `lib/core/services/offline_connectivity_service.dart`, `lib/core/services/adhan_service.dart`, `lib/features/ilm/data/services/mutun_audio_source_loader.dart`)**:
+     - Wired `LocalDiagnosticsService().record(...)` into `FlutterError.onError`, `PlatformDispatcher.instance.onError`, `ErrorWidget.builder`, `JustAudioBackground.init` failure fallback, connectivity online/offline transitions, Adhan Android raw-resource fallback/playback errors, and Mutun audio URL fallback warnings.
+  3. **In-App Diagnostics & Support Sheet (`lib/features/more/presentation/widgets/diagnostics_report_sheet.dart`, `lib/features/more/presentation/more_page.dart`)**:
+     - Added RTL `DiagnosticsReportSheet` (`AppSheet`, `AppCard`, `AppButton`, scrollable `AppEmptyState`, `AppSnackbar`) with network status banner, local privacy guarantee notice, scrollable diagnostic log viewer (no raw `'json'`/`'JSON'` strings), one-tap clipboard copy (`نسخ التقرير`), and clear (`مسح السجل`), surfaced via the `'التشخيص والدعم الفني'` entry button in `MorePage`.
+  4. **Unit & Widget Coverage (`test/local_diagnostics_service_test.dart`)**:
+     - Added tests covering 80-entry FIFO ring eviction, coordinate redaction, shareable report generation, copy/clear flows, and `2.0x` text scale rendering without layout overflow.
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: `No issues found!`.
+  - `python tool/ui_lint_v2.py --strict`: `OK` (`allow markers used: 8 (cap 10)`).
+  - **All `132` non-golden `test/*_test.dart` files**: **`848 / 848 passed`** (`390` Batch 1 + `458` Batch 2, `0` failures).
+  - `python tool/test_release_readiness_checks.py` (`27/27 OK`) & `python tool/verify_android_signing_fail_closed.py` (`ALL PASSED`).
+  - `flutter build apk --debug --no-pub`: Built `build\app\outputs\flutter-apk\app-debug.apk` (`41.9s`).
+- **Status**: Stage 2 Complete & Verified.
+
 ## Stage R70 — Full Test Suite & CI Gate 3 Stabilization (Stage 1 of Hardening Plan) (16 November 2026)
 - **Branch**: `main`
 - **Root Cause Analysis & Problems Solved**:
