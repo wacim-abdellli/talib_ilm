@@ -1,3 +1,27 @@
+## Stage R73 — External Media Resilience, Manifest & Privacy Hardening (Stage 4 of Hardening Plan) (16 November 2026)
+- **Branch**: `main` · **Prior Stage 3 CI (`a19ff80`)**: `Build iOS App` (`success`), `Verify Release Readiness` running in CI
+- **Hardening Implemented**:
+  1. **Live Audio CDN Audit & TLS Short-Circuit Recovery (`mutun_audio_source_loader.dart`)**:
+     - Probed all `287` book-reciter sources via `python tool/verify_ilm_audio_urls.py`: **`343 / 343` unique HTTPS CDN URLs returned `HTTP 200/206`**.
+     - Added instant TLS certificate failure short-circuiting (`_isTlsCertificateError`) inside `loadIntoPlayer()` so failed TLS handshakes skip redundant `setUrl()` retries against the broken host, log via `LocalDiagnosticsService`, and switch immediately to fallback (`archive.org`).
+     - Added chapter-aware fallback recovery (`chapters[startChapter].audioUrl` + optional `chapterIndex` parameter in `resolveFallbackUrl()`).
+  2. **Android Manifest & Backup Security Hygiene (`AndroidManifest.xml`, `backup_rules.xml`, `data_extraction_rules.xml`)**:
+     - Tightened `.DhikrOverlayReceiver` to `android:exported="false"` and removed unauthenticated custom `DHIKR_OVERLAY_*` `<intent-filter>` declarations (internal `DhikrOverlayScheduler` uses explicit component intents; lockscreen events continue via dynamic receiver in `DhikrOverlayService`).
+     - Audited `network_security_config.xml` (`cleartextTrafficPermitted="false"`), `backup_rules.xml`, and `data_extraction_rules.xml` (`sharedpref` + `database` scoped, excluding cached media/`qcf_fonts` bloat).
+  3. **Complete Privacy Host Disclosures (`docs/PRIVACY_POLICY.md`, `docs/GOOGLE_PLAY_DATA_SAFETY_FACT_SHEET.md`)**:
+     - Updated external network provider tables to cover all `18` HTTPS domains traced by `audit_network_and_privacy.py` (including `archive.org`, `files.a-alqasim.com`, `anchor.fm`, `d3ctxlq1ktw2nl.cloudfront.net`, `api.alquran.cloud`, `cdn.mp3quran.net`, `backup.qurango.net`) and corrected HTTP protocol notes to strictly HTTPS.
+  4. **Security & Resilience Tests**:
+     - Extended [`ilm_audio_connectivity_recovery_test.dart`](file:///d:/Projects/talib_ilm-main/test/ilm_audio_connectivity_recovery_test.dart), [`network_boundaries_and_security_test.dart`](file:///d:/Projects/talib_ilm-main/test/network_boundaries_and_security_test.dart), and [`privacy_and_play_disclosures_test.dart`](file:///d:/Projects/talib_ilm-main/test/privacy_and_play_disclosures_test.dart).
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: `No issues found!`.
+  - `python tool/ui_lint_v2.py --strict`: `OK` (`allow markers used: 8 (cap 10)`).
+  - `python tool/verify_ilm_audio_urls.py`: `343/343` unique HTTPS URLs `HTTP 200/206`.
+  - `python tool/audit_network_and_privacy.py`: `0` cleartext `http://` refs, `18` HTTPS domains.
+  - **All `133` non-golden `test/*_test.dart` files**: **`853 / 853 passed`** (`393` Batch 1 + `460` Batch 2, `0` failures).
+  - `python tool/test_release_readiness_checks.py` (`27/27 OK`) & `python tool/verify_android_signing_fail_closed.py` (`ALL PASSED`).
+  - `flutter build apk --debug --no-pub`: Built `build\app\outputs\flutter-apk\app-debug.apk` (`34.9s`).
+- **Status**: Stage 4 Complete & Verified (All 4 Hardening Plan Stages Complete).
+
 ## Stage R72 — Core Service Modularization (<600 Lines Split, Stage 3 of Hardening Plan) (16 November 2026)
 - **Branch**: `main` · **Prior Stage 2 CI (`03eb8e7`)**: `Build iOS App` (`success`), `Verify Release Readiness` running in CI
 - **Modularizations Implemented (Zero public API / behavior changes)**:

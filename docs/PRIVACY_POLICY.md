@@ -57,12 +57,13 @@ To provide authentic Islamic multimedia resources without requiring massive bund
 
 | Content Type | External Provider / Host | Data Sent | Purpose & Trigger |
 | :--- | :--- | :--- | :--- |
-| **Quran Audio Recitations** | `everyayah.com`<br>`cdn.islamic.network` | HTTP GET request for Surah/Ayah audio file | User selects a reciter and plays or downloads an audio track. |
-| **Quranic Tafsir & Word Meanings** | `api.quran.com`<br>`cdn.jsdelivr.net` | HTTP GET request for specific Surah/Ayah ID | User opens Tafsir tab or word-by-word view for an Ayah. |
-| **Quran Radio Streams** | `mp3quran.net`<br>`qurango.net` | HTTP GET request for radio catalog & audio stream | User opens the Quran Radio feature and selects a station. |
-| **Islamic Books Library** | `shamela.ws` | HTTP GET request for book page ID | User browses or reads an online book in the Shamela section. |
+| **Quran Audio Recitations** | `everyayah.com`<br>`cdn.islamic.network`<br>`archive.org` | HTTPS GET request for Surah/Ayah audio file | User selects a reciter and plays or downloads an audio track. |
+| **Quranic Tafsir, Verse & Page Metadata** | `api.quran.com`<br>`api.alquran.cloud`<br>`cdn.jsdelivr.net` | HTTPS GET request for specific Surah/Ayah ID | User opens Tafsir tab or word-by-word view for an Ayah. |
+| **Quran Radio Streams** | `mp3quran.net`<br>`cdn.mp3quran.net`<br>`backup.qurango.net`<br>`qurango.net` | HTTPS GET request for radio catalog & audio stream | User opens the Quran Radio feature and selects a station. |
+| **Ilm Mutun & Audiobooks Audio** | `files.a-alqasim.com`<br>`archive.org`<br>`anchor.fm`<br>`d3ctxlq1ktw2nl.cloudfront.net` | HTTPS GET request for scholarly matn / audiobook MP3 | User taps Play in Mutun or Audiobooks section. |
+| **Islamic Books Library** | `shamela.ws` | HTTPS GET request for book page ID | User browses or reads an online book in the Shamela section. |
 | **Mutun Scholarly Lessons** | `youtube.com`<br>`youtube-nocookie.com` | Embedded YouTube player request via standard webview | User taps to watch an authentic scholarly lecture video. |
-| **City Name Lookup (Opt-in only)** | `api.bigdatacloud.net`<br>Android OS Geocoder | Lat/Long coordinates (no user identifier) | User explicitly opts in to remote city lookup in prayer settings. |
+| **City Name Lookup (Opt-in only)** | `api.bigdatacloud.net`<br>`nominatim.openstreetmap.org`<br>Android OS Geocoder | Lat/Long coordinates (no user identifier) | User explicitly opts in to remote city lookup in prayer settings. |
 
 > **Radical Honesty Disclosure Regarding Third-Party Providers:**  
 > When your device streams or downloads content from external servers (such as EveryAyah, Mp3Quran, Shamela, or YouTube), your device communicates directly with those third-party hosting infrastructures. As with any standard Internet connection, those external servers receive standard TCP/IP networking metadata (including your device's public IP address, date/time, and client user-agent headers).  

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
@@ -17,6 +18,7 @@ class _ControllableMutunPlayer implements AudioPlayer {
   final indices = StreamController<int?>.broadcast(sync: true);
 
   bool failOnLoad = false;
+  Object? customLoadError;
   bool disposed = false;
   bool playingFlag = false;
   ProcessingState stateFlag = ProcessingState.idle;
@@ -53,7 +55,7 @@ class _ControllableMutunPlayer implements AudioPlayer {
       attemptedUrls.add(audioSource.uri.toString());
     }
     if (failOnLoad) {
-      throw TimeoutException('Simulated offline failure');
+      throw customLoadError ?? TimeoutException('Simulated offline failure');
     }
     loadedSource = audioSource;
     stateFlag = ProcessingState.ready;
@@ -73,7 +75,7 @@ class _ControllableMutunPlayer implements AudioPlayer {
   }) async {
     attemptedUrls.add(url);
     if (failOnLoad) {
-      throw TimeoutException('Simulated offline failure');
+      throw customLoadError ?? TimeoutException('Simulated offline failure');
     }
     stateFlag = ProcessingState.ready;
     const d = Duration(minutes: 12);
@@ -236,6 +238,54 @@ void main() {
         players.last.attemptedUrls.first,
         contains('0101AlAthkaar_AbdulAzizAsSini.mp3'),
       );
+    });
+
+    test('TLS HandshakeException short-circuits duplicate setUrl and switches immediately to HTTPS fallback', () async {
+      final failingTlsPlayer = _ControllableMutunPlayer()
+        ..failOnLoad = true
+        ..customLoadError = const HandshakeException('TLS certificate error');
+      final fallbackPlayer = _ControllableMutunPlayer()..failOnLoad = false;
+      final loader = MutunAudioSourceLoader();
+      const primaryUrl =
+          'https://files.a-alqasim.com/audio/Mutoon/AbdulAzizAsSini/0101AlAthkaar_AbdulAzizAsSini.mp3';
+
+      final res = await loader.loadWithFallback(
+        getPlayer: () =>
+            failingTlsPlayer.attemptedUrls.isEmpty ? failingTlsPlayer : fallbackPlayer,
+        recreatePlayer: () async {},
+        bookId: 'bk_adhkar_adab',
+        requestedUrl: primaryUrl,
+        reciter: MutunReciterDefaults.sini,
+      );
+
+      // Must skip redundant setUrl() retry on the same TLS-failing host (1 attempt, not 2)
+      expect(failingTlsPlayer.attemptedUrls, hasLength(1));
+      expect(res.loaded, isTrue);
+      expect(res.usedFallback, isTrue);
+      expect(res.effectiveUrl, contains('archive.org'));
+
+      // Next call during TLS cooldown skips primary TLS host immediately
+      final fastFallbackPlayer = _ControllableMutunPlayer()..failOnLoad = false;
+      final cachedRes = await loader.loadIntoPlayer(
+        player: fastFallbackPlayer,
+        bookId: 'bk_adhkar_adab',
+        requestedUrl: primaryUrl,
+        reciter: MutunReciterDefaults.sini,
+      );
+      expect(cachedRes.usedFallback, isTrue);
+      expect(fastFallbackPlayer.attemptedUrls.first, contains('archive.org'));
+
+      // Reset clears temporary bypass so healthy primary host is attempted again
+      loader.resetTransientFailures();
+      final resetPlayer = _ControllableMutunPlayer()..failOnLoad = false;
+      final restoredRes = await loader.loadIntoPlayer(
+        player: resetPlayer,
+        bookId: 'bk_adhkar_adab',
+        requestedUrl: primaryUrl,
+        reciter: MutunReciterDefaults.sini,
+      );
+      expect(restoredRes.usedFallback, isFalse);
+      expect(resetPlayer.attemptedUrls.first, equals(primaryUrl));
     });
   });
 }

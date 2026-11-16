@@ -215,9 +215,20 @@ class MutunAudioSourceLoader {
         );
       } catch (playlistErr) {
         debugPrint('Multi-chapter playlist failed: $playlistErr');
+        if (startChapter >= 0 && startChapter < chapters.length) {
+          effectiveUrl = chapters[startChapter].audioUrl;
+        }
       }
     }
 
+    final effectiveHost = Uri.tryParse(effectiveUrl)?.host;
+    final chapterFallback =
+        (chapters != null &&
+            startChapter >= 0 &&
+            startChapter < chapters.length)
+        ? chapters[startChapter].fallbackUrl
+        : null;
+    final resolvedFallback = chapterFallback ?? fallbackCandidate;
     final attemptTimeout = AppPolicy.networkTimeout;
 
     try {
@@ -239,13 +250,34 @@ class MutunAudioSourceLoader {
       return MutunLoadedAudioResult(
         loaded: true,
         isMultiChapter: false,
-        startChapter: 0,
+        startChapter: startChapter,
         duration: dur,
         effectiveUrl: effectiveUrl,
         usedFallback: effectiveIsFallback,
       );
     } catch (sourceErr) {
       debugPrint('AudioSource.uri failed ($effectiveUrl): $sourceErr');
+      if (effectiveHost != null &&
+          !effectiveIsFallback &&
+          resolvedFallback != null &&
+          _isTlsCertificateError(sourceErr)) {
+        _untrustedTlsHosts[effectiveHost] = DateTime.now();
+        LocalDiagnosticsService().record(
+          category: 'audio',
+          severity: 'warn',
+          message:
+              'Book audio TLS error for $effectiveHost (switching to fallback)',
+          error: sourceErr,
+        );
+        return MutunLoadedAudioResult(
+          loaded: false,
+          isMultiChapter: false,
+          startChapter: startChapter,
+          duration: null,
+          effectiveUrl: effectiveUrl,
+          usedFallback: effectiveIsFallback,
+        );
+      }
       try {
         await player.stop();
         final dur = await player
@@ -255,7 +287,7 @@ class MutunAudioSourceLoader {
         return MutunLoadedAudioResult(
           loaded: true,
           isMultiChapter: false,
-          startChapter: 0,
+          startChapter: startChapter,
           duration: dur,
           effectiveUrl: effectiveUrl,
           usedFallback: effectiveIsFallback,
@@ -265,14 +297,14 @@ class MutunAudioSourceLoader {
         LocalDiagnosticsService().record(
           category: 'audio',
           severity: 'warn',
-          message: 'Book audio load failed for ${host ?? effectiveUrl}',
+          message: 'Book audio load failed for ${effectiveHost ?? effectiveUrl}',
           error: urlErr,
         );
-        if (host != null &&
-            fallbackCandidate != null &&
+        if (effectiveHost != null &&
+            resolvedFallback != null &&
             (_isTlsCertificateError(sourceErr) ||
                 _isTlsCertificateError(urlErr))) {
-          _untrustedTlsHosts[host] = DateTime.now();
+          _untrustedTlsHosts[effectiveHost] = DateTime.now();
         }
       }
     }
@@ -280,7 +312,7 @@ class MutunAudioSourceLoader {
     return MutunLoadedAudioResult(
       loaded: false,
       isMultiChapter: false,
-      startChapter: 0,
+      startChapter: startChapter,
       duration: null,
       effectiveUrl: effectiveUrl,
       usedFallback: effectiveIsFallback,
@@ -324,7 +356,12 @@ class MutunAudioSourceLoader {
       isFallbackAttempt: isFallbackAttempt,
     );
     if (first.loaded || first.usedFallback || isFallbackAttempt) return first;
-    final fallbackUrl = resolveFallbackUrl(bookId, reciter.id, first.effectiveUrl);
+    final fallbackUrl = resolveFallbackUrl(
+      bookId,
+      reciter.id,
+      first.effectiveUrl,
+      chapterIndex: first.startChapter,
+    );
     if (fallbackUrl == null) return first;
     await recreatePlayer();
     return loadIntoPlayer(
@@ -332,6 +369,7 @@ class MutunAudioSourceLoader {
       bookId: bookId,
       requestedUrl: fallbackUrl,
       reciter: reciter,
+      initialChapterIndex: first.startChapter,
       initialPosition: initialPosition,
       isFallbackAttempt: true,
     );
@@ -359,11 +397,21 @@ class MutunAudioSourceLoader {
   String? resolveFallbackUrl(
     String bookId,
     String reciterId,
-    String failedUrl,
-  ) {
-    final candidate =
+    String failedUrl, {
+    int? chapterIndex,
+  }) {
+    final chapters =
+        MutunAudioCatalog.getSource(bookId, reciterId: reciterId)?.chapters;
+    String? candidate;
+    if (chapters != null &&
+        chapterIndex != null &&
+        chapterIndex >= 0 &&
+        chapterIndex < chapters.length) {
+      candidate = chapters[chapterIndex].fallbackUrl;
+    }
+    candidate ??=
         MutunAudioCatalog.getFallbackAudioUrl(bookId, reciterId: reciterId) ??
-            MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
+        MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
     if (candidate == null || candidate.isEmpty || candidate == failedUrl) {
       return null;
     }

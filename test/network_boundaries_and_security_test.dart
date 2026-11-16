@@ -583,5 +583,30 @@ void main() {
       expect(res['countryCode'], 'DZ');
       expect(fakeHttp.requestCount, 1);
     });
+
+    test('Android manifest, network security, and backup configs enforce strict boundaries', () {
+      final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+      final netConfig =
+          File('android/app/src/main/res/xml/network_security_config.xml').readAsStringSync();
+      final backupRules =
+          File('android/app/src/main/res/xml/backup_rules.xml').readAsStringSync();
+      final extractionRules =
+          File('android/app/src/main/res/xml/data_extraction_rules.xml').readAsStringSync();
+
+      expect(netConfig, contains('cleartextTrafficPermitted="false"'));
+      expect(manifest, contains('android:networkSecurityConfig="@xml/network_security_config"'));
+      expect(manifest, isNot(contains('DHIKR_OVERLAY_SHOW_NOW')));
+      expect(manifest, isNot(contains('DHIKR_OVERLAY_ALARM_CHECK')));
+      expect(
+        RegExp(r'<receiver[^>]*\.DhikrOverlayReceiver[^>]*android:exported="false"').hasMatch(manifest),
+        isTrue,
+      );
+
+      for (final rules in [backupRules, extractionRules]) {
+        expect(rules, contains('FlutterSharedPreferences.xml'));
+        expect(rules, isNot(contains('domain="file"')));
+        expect(rules, isNot(contains('qcf_fonts')));
+      }
+    });
   });
 }

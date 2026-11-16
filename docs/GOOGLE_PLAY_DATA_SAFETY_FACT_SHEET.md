@@ -146,14 +146,15 @@ For total transparency and Play Store compliance, here is every external network
 
 | Host Domain | Protocol | Content / Functionality | Triggers & User Intent | Governed By |
 | :--- | :--- | :--- | :--- | :--- |
-| `everyayah.com` | HTTPS / HTTP (cleartext fallback) | Quran audio recitations (MP3) | User selects reciter and taps Play or Download. | EveryAyah Public Project |
+| `everyayah.com` | HTTPS | Quran audio recitations (MP3) | User selects reciter and taps Play or Download. | EveryAyah Public Project |
 | `cdn.islamic.network` | HTTPS | Secondary Quran audio stream | Fallback stream when selected by user. | Islamic Network CDN |
-| `api.quran.com` | HTTPS | Quran Tafsir & Chapter metadata | User opens Tafsir tab or Ayah info. | Quran.com Foundation |
+| `api.quran.com`<br>`api.alquran.cloud` | HTTPS | Quran Tafsir & Chapter metadata | User opens Tafsir tab or Ayah info. | Quran.com / AlQuran Cloud |
 | `cdn.jsdelivr.net` | HTTPS | Static open-source Tafsir JSON (`spa5k/tafsir_api`) | User loads Tafsir explanations. | jsDelivr Open Source CDN |
-| `mp3quran.net`<br>`qurango.net` | HTTPS / HTTP (cleartext fallback) | Quran Radio stations directory and live audio streams | User opens Radio tab and taps a station. | Mp3Quran Network |
+| `mp3quran.net`<br>`cdn.mp3quran.net`<br>`backup.qurango.net`<br>`qurango.net` | HTTPS | Quran Radio stations directory and live audio streams | User opens Radio tab and taps a station. | Mp3Quran Network |
+| `files.a-alqasim.com`<br>`archive.org`<br>`anchor.fm`<br>`d3ctxlq1ktw2nl.cloudfront.net` | HTTPS | Ilm Mutun & Scholarly Audiobooks (MP3) | User taps Play in Mutun or Audiobooks section. | Public Islamic Audio Archives / CDNs |
 | `shamela.ws` | HTTPS | Authentic Islamic book library pages | User browses online Shamela book. | Al-Maktaba Al-Shamela |
 | `www.youtube.com`<br>`youtube-nocookie.com` | HTTPS | Video lectures for Mutun Talib Al-Ilm lessons | User taps a video lecture tile. | Google / YouTube Terms |
-| `api.bigdatacloud.net` | HTTPS | Reverse geocoding (lat/long → Arabic city name) | **Strictly opt-in only:** user toggles "جلب اسم المدينة عبر الإنترنت". | BigDataCloud Privacy Policy |
+| `api.bigdatacloud.net`<br>`nominatim.openstreetmap.org` | HTTPS | Reverse geocoding / city lookup | **Strictly opt-in only:** user toggles "جلب اسم المدينة عبر الإنترنت" or uses online city search. | BigDataCloud / OSM Nominatim |
 
 ---
 

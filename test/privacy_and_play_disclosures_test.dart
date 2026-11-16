@@ -80,10 +80,14 @@ void main() {
       const requiredHosts = [
         'everyayah.com',
         'api.quran.com',
+        'api.alquran.cloud',
         'mp3quran.net',
         'shamela.ws',
         'youtube.com',
         'api.bigdatacloud.net',
+        'archive.org',
+        'files.a-alqasim.com',
+        'anchor.fm',
       ];
 
       for (final host in requiredHosts) {
