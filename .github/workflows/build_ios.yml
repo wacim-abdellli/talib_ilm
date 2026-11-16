@@ -57,14 +57,7 @@ jobs:
               tmpwav="$RUNNER_TEMP/${base}_22k.wav"
               trimmedwav="$RUNNER_TEMP/${base}_trim.wav"
               /usr/bin/afconvert -f WAVE -d LEI16@22050 -c 1 "$mp3" "$tmpwav"
-              python3 -c "import wave, sys
-with wave.open(sys.argv[1], 'rb') as r:
-    p = r.getparams()
-    frames = r.readframes(int(p.framerate * 29.5))
-with wave.open(sys.argv[2], 'wb') as w:
-    w.setparams(p)
-    w.writeframes(frames)
-" "$tmpwav" "$trimmedwav"
+              python3 -c "import wave, sys; r=wave.open(sys.argv[1],'rb'); w=wave.open(sys.argv[2],'wb'); p=r.getparams(); w.setparams(p); w.writeframes(r.readframes(int(p.framerate*29.5))); r.close(); w.close()" "$tmpwav" "$trimmedwav"
               /usr/bin/afconvert -f caff -d ima4 -c 1 "$trimmedwav" "$caf" || echo "Skipping $mp3 conversion on error"
               rm -f "$tmpwav" "$trimmedwav"
             fi

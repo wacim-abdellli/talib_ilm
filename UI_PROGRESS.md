@@ -1,5 +1,5 @@
-## Stage R69 — Maximum Bundle Compression (Modern/Old Split APKs & iOS IPA) — v1.3.11 (16 November 2026)
-- **Branch**: `main` · **Tag**: `v1.3.11` · **Version**: `1.0.2+2006`
+## Stage R69 — Maximum Bundle Compression (Modern/Old Split APKs & iOS IPA) — v1.3.12 (16 November 2026)
+- **Branch**: `main` · **Tag**: `v1.3.12` · **Version**: `1.0.2+2006`
 - **Root Cause Analysis & Optimizations Implemented**:
   1. **Chunked XZ QCF Mushaf Fonts (`packages/qcf_quran_plus/`)**:
      - Replaced `604` individual `.ttf.gz` font files (`65.53 MB`) with `31` LZMA (`preset=9`, 20-page blocks) archives (`qcf_chunk_00.bin.xz`..`qcf_chunk_30.bin.xz`, `48.15 MB` total — **`-17.38 MB` saved across both Android APKs & iOS IPA**), verifying SHA-256 identity across all 604 extracted TrueType fonts.

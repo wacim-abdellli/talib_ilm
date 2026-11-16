@@ -151,12 +151,12 @@ talib_ilm/
 
 ## 📦 التحميل والتثبيت | Downloads & Installation
 
-| المنصة | نوع الحزمة | رابط التحميل المباشر (أحدث إصدار v1.3.11) |
+| المنصة | نوع الحزمة | رابط التحميل المباشر (أحدث إصدار v1.3.12) |
 | :--- | :--- | :--- |
-| **🤖 Android (هواتف حديثة)** | `APK (arm64-v8a · R8 Compressed)` | 📥 **[تحميل talib_ilm_modern_phones_release.apk](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.11/talib_ilm_modern_phones_release.apk)** (85.5 MB) |
-| **📱 Android (هواتف قديمة 32-bit)** | `APK (armeabi-v7a · R8 Compressed)` | 📥 **[تحميل talib_ilm_old_phones_release.apk](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.11/talib_ilm_old_phones_release.apk)** (86.4 MB) |
-| **🍎 iOS (آيفون)** | `IPA (Sideload / AltStore)` | 📥 **[تحميل talib_ilm_ios.ipa](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.11/talib_ilm_ios.ipa)** |
-| **💻 iOS Simulator** | `Runner.app.zip` | 📥 **[تحميل Runner.app.zip](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.11/Runner.app.zip)** |
+| **🤖 Android (هواتف حديثة)** | `APK (arm64-v8a · R8 Compressed)` | 📥 **[تحميل talib_ilm_modern_phones_release.apk](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.12/talib_ilm_modern_phones_release.apk)** (85.5 MB) |
+| **📱 Android (هواتف قديمة 32-bit)** | `APK (armeabi-v7a · R8 Compressed)` | 📥 **[تحميل talib_ilm_old_phones_release.apk](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.12/talib_ilm_old_phones_release.apk)** (86.4 MB) |
+| **🍎 iOS (آيفون)** | `IPA (Sideload / AltStore)` | 📥 **[تحميل talib_ilm_ios.ipa](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.12/talib_ilm_ios.ipa)** |
+| **💻 iOS Simulator** | `Runner.app.zip` | 📥 **[تحميل Runner.app.zip](https://github.com/wacim-abdellli/talib_ilm/releases/download/v1.3.12/Runner.app.zip)** |
 
 ### 🍎 تثبيت حزمة iOS (`.ipa` لنظام آيفون — يدعم الودجات والأذان)
 تُبنى حزمة iOS تلقائياً عبر **GitHub Actions** (`build_ios.yml`) متضمنةً امتداد الودجت `TalibIlmWidgets.appex` وملفات الصوت `.caf` الجاهزة للإشعارات الحساسة للوقت:
