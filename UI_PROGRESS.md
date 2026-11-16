@@ -1,3 +1,16 @@
+## Stage R74 — Final Compressed Split APKs & iOS IPA Release — v1.3.13 (16 November 2026)
+- **Branch**: `main` · **Tag**: `v1.3.13` · **Version**: `1.0.3+2007`
+- **Artifacts Built & Verified**:
+  - `talib_ilm_modern_phones_release.apk` (`arm64-v8a` R8 + obfuscated + split-per-abi + icon tree-shaken): **`85.54 MiB` (`89,696,216` bytes)**, cryptographically verified with `apksigner` (`CN=Talib Ilm App`, SHA-256 `fb4c8d95...`).
+  - `talib_ilm_old_phones_release.apk` (`armeabi-v7a` R8 + obfuscated + split-per-abi + icon tree-shaken): **`86.43 MiB` (`90,626,825` bytes)**, cryptographically verified with `apksigner` (`CN=Talib Ilm App`, SHA-256 `fb4c8d95...`).
+  - `v1.3.13` tag pushed to `origin` to trigger `.github/workflows/build_ios.yml` (`talib_ilm_ios.ipa` & `Runner.app.zip` GitHub Release).
+- **Verification Commands & Results**:
+  - `flutter analyze --no-pub`: `No issues found!`.
+  - `python tool/ui_lint_v2.py --strict`: `OK` (`allow markers used: 8 (cap 10)`).
+  - `python tool/test_release_readiness_checks.py`: `27/27 OK`.
+  - `flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/app/outputs/symbols --tree-shake-icons --no-pub`: Succeeded (`218.4s`) + `apksigner verify --print-certs`: PASSED on both APKs.
+- **Status**: Release `v1.3.13` built, verified, and tagged cleanly.
+
 ## Stage R73 — External Media Resilience, Manifest & Privacy Hardening (Stage 4 of Hardening Plan) (16 November 2026)
 - **Branch**: `main` · **Prior Stage 3 CI (`a19ff80`)**: `Build iOS App` (`success`), `Verify Release Readiness` running in CI
 - **Hardening Implemented**:
