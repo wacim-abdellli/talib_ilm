@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../../../../core/services/offline_connectivity_service.dart';
 import '../catalogs/shamela_curated_fihris_catalog.dart';
 import '../catalogs/turath_catalog.dart';
 import '../models/shamela_models.dart';
@@ -261,6 +262,7 @@ class ShamelaService {
       bookId: bookId,
       pageNumber: pageNumber,
     );
+    OfflineConnectivityService().reportOnline();
 
     // Save discovered total pages if parsed from page navigation
     if (parsed.detectedTotalPages != null && parsed.detectedTotalPages! > 0) {

@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 /// Lightweight, resilient service to monitor device internet connectivity.
-/// Notifies UI when device enters or leaves offline state (e.g. airplane mode, no signal).
-class OfflineConnectivityService {
+/// Notifies UI when device enters or leaves offline state (e.g. airplane mode, no signal)
+/// and refreshes cleanly when returning to the foreground or when real requests succeed.
+class OfflineConnectivityService with WidgetsBindingObserver {
   static final OfflineConnectivityService _instance =
       OfflineConnectivityService._internal();
   factory OfflineConnectivityService() => _instance;
@@ -30,6 +31,10 @@ class OfflineConnectivityService {
   }
 
   void _init() {
+    try {
+      WidgetsBinding.instance.addObserver(this);
+    } catch (_) {}
+
     // Initial check
     checkConnectivity();
 
@@ -39,7 +44,23 @@ class OfflineConnectivityService {
     });
   }
 
-  /// Manually query current connectivity
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      checkConnectivity();
+    }
+  }
+
+  /// Called when an actual network request (e.g. audio stream or page fetch) succeeds,
+  /// clearing any stale offline banner immediately.
+  void reportOnline() {
+    if (overrideForTesting != null) return;
+    if (isOfflineNotifier.value) {
+      isOfflineNotifier.value = false;
+    }
+  }
+
+  /// Manually query current connectivity. Returns `true` if offline, `false` if connected.
   Future<bool> checkConnectivity() async {
     if (overrideForTesting != null) {
       isOfflineNotifier.value = overrideForTesting!;
@@ -62,20 +83,23 @@ class OfflineConnectivityService {
       return;
     }
 
-    // A device is considered offline if results is empty or only contains .none
-    final hasConnection = results.any((r) =>
-        r == ConnectivityResult.wifi ||
-        r == ConnectivityResult.mobile ||
-        r == ConnectivityResult.ethernet ||
-        r == ConnectivityResult.vpn);
+    // Consider any active transport (including .other for hotspots/tunnels/dual-SIM)
+    // as connected. Only .none and .bluetooth indicate lack of internet interface.
+    final hasConnection = results.any(
+      (r) =>
+          r != ConnectivityResult.none && r != ConnectivityResult.bluetooth,
+    );
 
-    final offline = !hasConnection;
+    final offline = results.isEmpty || !hasConnection;
     if (isOfflineNotifier.value != offline) {
       isOfflineNotifier.value = offline;
     }
   }
 
   void dispose() {
+    try {
+      WidgetsBinding.instance.removeObserver(this);
+    } catch (_) {}
     _subscription?.cancel();
   }
 }

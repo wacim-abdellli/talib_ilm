@@ -48,6 +48,7 @@ class PrayerTimesDay {
   final DateTime? middleOfTheNight;
   final DateTime? lastThirdOfTheNight;
   final DateTime? dhuha;
+  final DateTime? dhuhaEnd;
   final double? qiblaDirection;
 
   const PrayerTimesDay({
@@ -61,6 +62,7 @@ class PrayerTimesDay {
     this.middleOfTheNight,
     this.lastThirdOfTheNight,
     this.dhuha,
+    this.dhuhaEnd,
     this.qiblaDirection,
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme/app_policy.dart';
 import '../../../../app/theme/app_ui.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../data/models/prayer_models.dart';
@@ -14,20 +15,28 @@ class PrayerSolarStationsCard extends StatelessWidget {
   final DateTime? sunrise;
   final DateTime? sunset;
   final DateTime? dhuha;
+  final DateTime? dhuhaEnd;
+  final DateTime? fajr;
+  final DateTime? nextFajr;
   final DateTime? middleOfTheNight;
   final DateTime? lastThirdOfTheNight;
   final double? qiblaDirection;
   final VoidCallback? onOpenQibla;
+  final DateTime? nowOverride;
 
   const PrayerSolarStationsCard({
     super.key,
     required this.sunrise,
     this.sunset,
     this.dhuha,
+    this.dhuhaEnd,
+    this.fajr,
+    this.nextFajr,
     this.middleOfTheNight,
     this.lastThirdOfTheNight,
     this.qiblaDirection,
     this.onOpenQibla,
+    this.nowOverride,
   });
 
   @override
@@ -42,14 +51,40 @@ class PrayerSolarStationsCard extends StatelessWidget {
 
     final palette = context.palette;
     final textTheme = context.text;
-    final now = DateTime.now();
+    final now = nowOverride ?? DateTime.now();
 
-    final sunrisePassed = sunrise != null && now.isAfter(sunrise!);
-    final dhuhaPassed = dhuha != null && now.isAfter(dhuha!);
+    final sunrisePassed = sunrise != null && !now.isBefore(sunrise!);
+
+    final DateTime? effectiveDhuhaEnd = dhuhaEnd ??
+        (dhuha != null ? AppPolicy.estimateDhuhaEnd(dhuha!, sunset) : null);
+    final dhuhaActive = dhuha != null &&
+        !now.isBefore(dhuha!) &&
+        effectiveDhuhaEnd != null &&
+        now.isBefore(effectiveDhuhaEnd);
+    final dhuhaPassed =
+        effectiveDhuhaEnd != null && !now.isBefore(effectiveDhuhaEnd);
+
+    final DateTime? nightEnd;
+    if (lastThirdOfTheNight != null &&
+        nextFajr != null &&
+        nextFajr!.isAfter(lastThirdOfTheNight!)) {
+      nightEnd = nextFajr;
+    } else if (lastThirdOfTheNight != null &&
+        fajr != null &&
+        fajr!.isAfter(lastThirdOfTheNight!)) {
+      nightEnd = fajr;
+    } else {
+      nightEnd = null;
+    }
+    final lastThirdActive = lastThirdOfTheNight != null &&
+        !now.isBefore(lastThirdOfTheNight!) &&
+        (nightEnd == null || now.isBefore(nightEnd));
+    final lastThirdPassed = lastThirdOfTheNight != null &&
+        nightEnd != null &&
+        !now.isBefore(nightEnd);
+
     final midnightPassed =
-        middleOfTheNight != null && now.isAfter(middleOfTheNight!);
-    final lastThirdPassed =
-        lastThirdOfTheNight != null && now.isAfter(lastThirdOfTheNight!);
+        middleOfTheNight != null && !now.isBefore(middleOfTheNight!);
 
     final sunriseColor = palette.prayer('sunrise');
     final dhuhaColor = palette.prayer('dhuha');
@@ -165,13 +200,16 @@ class PrayerSolarStationsCard extends StatelessWidget {
               Expanded(
                 child: _StationItem(
                   label: 'صلاة الضحى',
-                  subtitle: 'صلاة الأوابين',
+                  subtitle: dhuhaActive
+                      ? 'متاحة الآن · حتى ${formatPrayerTime12h(effectiveDhuhaEnd)}'
+                      : 'صلاة الأوابين',
                   timeText:
                       dhuha != null ? formatPrayerTime12h(dhuha!) : '--:--',
                   icon: Icons.light_mode_rounded,
                   iconBgColor: dhuhaColor.withValues(alpha: 0.12),
                   iconColor: dhuhaColor,
                   isPassed: dhuhaPassed,
+                  isActive: dhuhaActive,
                 ),
               ),
             ],
@@ -187,7 +225,9 @@ class PrayerSolarStationsCard extends StatelessWidget {
               Expanded(
                 child: _StationItem(
                   label: 'ثلث الليل الأخير',
-                  subtitle: 'قيام الليل والسحر',
+                  subtitle: lastThirdActive
+                      ? 'الآن · قيام الليل والسحر'
+                      : 'قيام الليل والسحر',
                   timeText: lastThirdOfTheNight != null
                       ? formatPrayerTime12h(lastThirdOfTheNight!)
                       : '--:--',
@@ -195,6 +235,7 @@ class PrayerSolarStationsCard extends StatelessWidget {
                   iconBgColor: qiyamColor.withValues(alpha: 0.12),
                   iconColor: qiyamColor,
                   isPassed: lastThirdPassed,
+                  isActive: lastThirdActive,
                 ),
               ),
               Container(
@@ -233,6 +274,7 @@ class _StationItem extends StatelessWidget {
   final Color iconBgColor;
   final Color iconColor;
   final bool isPassed;
+  final bool isActive;
 
   const _StationItem({
     required this.label,
@@ -242,6 +284,7 @@ class _StationItem extends StatelessWidget {
     required this.iconBgColor,
     required this.iconColor,
     required this.isPassed,
+    this.isActive = false,
   });
 
   @override
@@ -259,8 +302,8 @@ class _StationItem extends StatelessWidget {
             shape: BoxShape.circle,
             color: iconBgColor,
             border: Border.all(
-              color: iconColor.withValues(alpha: 0.3),
-              width: 1,
+              color: iconColor.withValues(alpha: isActive ? 0.8 : 0.3),
+              width: isActive ? 1.5 : 1.0,
             ),
           ),
           child: Center(
@@ -292,7 +335,25 @@ class _StationItem extends StatelessWidget {
                       maxLines: 1,
                     ),
                   ),
-                  if (isPassed) ...[
+                  if (isActive) ...[
+                    const SizedBox(width: AppSpace.xxs),
+                    Container(
+                      padding: const EdgeInsetsDirectional.symmetric(
+                        horizontal: AppSpace.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: iconBgColor,
+                        borderRadius: AppRadius.pillRadius,
+                      ),
+                      child: Text(
+                        'الآن',
+                        style: textTheme.caption.copyWith(
+                          color: iconColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ] else if (isPassed) ...[
                     const SizedBox(width: AppSpace.xxs),
                     Icon(
                       Icons.check_circle_rounded,

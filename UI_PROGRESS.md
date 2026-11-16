@@ -1,3 +1,21 @@
+## Stage R68 — Solar Stations Audit (Shuruk/Dhuha/Midnight/Last Third) & Book Audio Connectivity Recovery (16 November 2026)
+- **Branch**: `main`
+- **Root Cause Analysis & Problems Solved**:
+  1. **Astronomical Audit of الشروق، الضحى، منتصف الليل، وثلث الليل الأخير**:
+     - Verified astronomical math against `adhan` (`SolarTime.sunrise` at `-50/60°`, `Sunrise + 15m` Dhuha start, and `SunnahTimes` using `Maghrib -> Next Fajr` for Middle of Night and Last Third) across Tunisia (Sfax/Tunis +6m Dhuhr margin), Makkah, Algiers, and Cairo.
+     - **Dhuha `isPassed` Window Bug (`prayer_time_service.dart`, `prayer_models.dart`, `prayer_solar_stations_card.dart`)**: `PrayerSolarStationsCard` previously checked `now.isAfter(dhuha!)`, marking Dhuha as already passed immediately after `07:07` instead of active throughout the morning until zenith prohibition. Added `dhuhaEnd` (`zawalTime - 10m` after subtracting method & user Dhuhr adjustments, with `AppPolicy.estimateDhuhaEnd` fallback), live `'متاحة الآن · حتى ...'` / `'الآن'` active badge, and accurate `isPassed` after `dhuhaEnd`.
+     - **Post-Midnight Pre-Fajr Night Rollover (`prayer_time_service.dart`, `prayer_page.dart`)**: Between `00:00` and `Fajr` in live mode (`date == null`), `SunnahTimes(times)` previously computed the upcoming night (`today Maghrib -> tomorrow Fajr`) instead of the active pre-Fajr night (`yesterday Maghrib -> today Fajr`). Updated `_buildDay` to resolve yesterday's `Maghrib -> today Fajr` during `00:00 -> Fajr` and passed `fajr`/`nextFajr` bounds to `PrayerSolarStationsCard`.
+  2. **Ilm Book Audio Playback Failure, Stale Duration, & Stuck Offline Mode Box**:
+     - **False Blacklisting & Tight Primary Timeout (`mutun_audio_source_loader.dart`)**: `files.a-alqasim.com` (Sini recitations) previously used a `3s` timeout (`AppPolicy.networkFast`) and permanently added failed hosts (even offline/timeout errors) to `_untrustedTlsHosts`, trapping playback onto `archive.org` (which fails strict CA checks) until app restart. Raised primary/fallback load timeout to `AppPolicy.networkTimeout` (`15s`), scoped `_untrustedTlsHosts` strictly to TLS errors with a 60s expiry, added `resetTransientFailures()` and `loadWithFallback()`.
+     - **Stale Duration & Failed Player Recovery (`mutun_audio_service.dart`, `mutun_audio_player_hud.dart`)**: Reset `durationNotifier`/`positionNotifier` on book switch or retry, ensured synchronous `_recreatePlayer()` swapping, preserved `_lastLoadFailed` across `OfflineConnectivityService` reconnect notifications until a fresh `AudioPlayer` replaces the errored instance before trying primary URLs again, cleared stale error snackbars on playback start/recovery, and prevented old `_currentAudioUrl` leaks on error.
+     - **False Offline Banner & Missing Recovery Listeners (`offline_connectivity_service.dart`, `offline_status_banner.dart`, `mutn_digital_reader.dart`, `shamela_reader_page.dart`, `shamela_service.dart`)**: Treated `ConnectivityResult.other` (tunnels/hotspots/tethering) as connected, added `WidgetsBindingObserver` foreground `resumed` re-checks + `reportOnline()`, reset banner dismissal state when connection returns, and wired reconnect auto-retry for failed book pages.
+- **Verification Commands & Results**:
+  - `flutter analyze`: 0 issues found (`No issues found!`, 6.0s).
+  - `python tool/ui_lint_v2.py --strict`: `OK` (`allow markers used: 8 (cap 10)`).
+  - `flutter test test/prayer_solar_stations_audit_test.dart test/ilm_audio_connectivity_recovery_test.dart test/adhan_native_engine_test.dart test/adhkar_notification_and_solar_test.dart test/verified_location_and_prayer_test.dart test/mutun_curriculum_reader_test.dart`: All 40 tests passed (`00:11 +40: All tests passed!`).
+  - `flutter build apk --debug`: Built `build\app\outputs\flutter-apk\app-debug.apk` (184.6s).
+- **Status**: Complete & Verified.
+
 ## Stage R67 — Downloaded Quran Audio & Mushaf Reader Decoupling and Conflict Resolution (13 November 2026)
 - **Branch**: `main`
 - **Root Cause Analysis & Problems Solved**:

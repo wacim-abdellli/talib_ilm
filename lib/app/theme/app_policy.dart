@@ -15,6 +15,17 @@ class AppPolicy {
   static const Duration debounce = Duration(milliseconds: 500);
   static const Duration seekStep = Duration(seconds: 5);
   static const Duration khatmahPageReadThreshold = Duration(seconds: 15);
+  static const Duration defaultDhuhaWindow = Duration(hours: 4, minutes: 30);
+
+  /// Fallback end of Dhuha estimate when full prayer day data is omitted.
+  static DateTime estimateDhuhaEnd(DateTime dhuhaStart, DateTime? sunset) {
+    if (sunset != null) {
+      final halfSpanMs =
+          (sunset.difference(dhuhaStart).inMilliseconds * 0.45).round();
+      return dhuhaStart.add(Duration(milliseconds: halfSpanMs));
+    }
+    return dhuhaStart.add(defaultDhuhaWindow);
+  }
 
   // Periodic Intervals & Polling
   static const Duration oneSecond = Duration(seconds: 1);

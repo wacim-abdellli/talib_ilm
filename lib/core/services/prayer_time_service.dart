@@ -363,11 +363,17 @@ class PrayerTimeService {
     }
 
     // Native offline astronomical calculations via adhan
-    final sunnahTimes = SunnahTimes(times);
-    final middleOfTheNight = sunnahTimes.middleOfTheNight.add(tzCorrection);
-    final lastThirdOfTheNight = sunnahTimes.lastThirdOfTheNight.add(tzCorrection);
     final sunriseTime = times.sunrise.add(tzCorrection);
     final dhuha = sunriseTime.add(const Duration(minutes: 15));
+
+    // Astronomical Zawal (Solar Transit) before precaution & manual Dhuhr margins;
+    // Dhuha ends ~10 minutes prior to true Zawal when zenith prohibition starts.
+    final totalDhuhrAdj = params.methodAdjustments.dhuhr + params.adjustments.dhuhr;
+    final zawalTime = times.dhuhr
+        .add(tzCorrection)
+        .subtract(Duration(minutes: totalDhuhrAdj));
+    final dhuhaEnd = zawalTime.subtract(const Duration(minutes: 10));
+
     final qiblaDirection = Qibla(coordinates).direction;
 
     final prayers = <String, DateTime>{
@@ -377,6 +383,25 @@ class PrayerTimeService {
       AppStrings.prayerMaghrib: times.maghrib.add(tzCorrection),
       AppStrings.prayerIsha: times.isha.add(tzCorrection),
     };
+
+    // During pre-Fajr hours (00:00 -> Fajr) in live mode, the active Islamic night
+    // started at yesterday's Maghrib and ends at today's Fajr.
+    final fajrToday = prayers[AppStrings.prayerFajr]!;
+    final isActivePreFajrNight = date == null && current.isBefore(fajrToday);
+    final SunnahTimes sunnahTimes;
+    if (isActivePreFajrNight) {
+      final yesterday = DateTime(current.year, current.month, current.day - 1);
+      final yesterdayTimes = PrayerTimes(
+        coordinates,
+        DateComponents.from(yesterday),
+        params,
+      );
+      sunnahTimes = SunnahTimes(yesterdayTimes);
+    } else {
+      sunnahTimes = SunnahTimes(times);
+    }
+    final middleOfTheNight = sunnahTimes.middleOfTheNight.add(tzCorrection);
+    final lastThirdOfTheNight = sunnahTimes.lastThirdOfTheNight.add(tzCorrection);
 
     final reference = date == null
         ? current
@@ -418,6 +443,7 @@ class PrayerTimeService {
       middleOfTheNight: middleOfTheNight,
       lastThirdOfTheNight: lastThirdOfTheNight,
       dhuha: dhuha,
+      dhuhaEnd: dhuhaEnd,
       qiblaDirection: qiblaDirection,
     );
   }

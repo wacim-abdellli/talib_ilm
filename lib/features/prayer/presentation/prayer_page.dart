@@ -204,6 +204,11 @@ class _PrayerPageState extends State<PrayerPage> {
                                 sunrise: data.sunrise,
                                 sunset: data.sunset,
                                 dhuha: data.dhuha,
+                                dhuhaEnd: data.dhuhaEnd,
+                                fajr: data.prayers[AppStrings.prayerFajr],
+                                nextFajr: data.nextPrayer == AppStrings.prayerFajr
+                                    ? data.nextPrayerTime
+                                    : null,
                                 middleOfTheNight: data.middleOfTheNight,
                                 lastThirdOfTheNight: data.lastThirdOfTheNight,
                                 qiblaDirection: data.qiblaDirection,

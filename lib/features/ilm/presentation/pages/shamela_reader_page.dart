@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/services/offline_connectivity_service.dart';
 import '../../../../core/utils/app_share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -73,6 +74,7 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     themeService.addListener(_onThemeChanged);
+    OfflineConnectivityService().isOfflineNotifier.addListener(_onReconnectRetry);
     _currentPage = widget.initialPage;
     final activeAudio = _audioService.activeBookIdNotifier.value;
     if (widget.initialShowAudio ||
@@ -106,9 +108,19 @@ class _ShamelaReaderPageState extends State<ShamelaReaderPage> {
     _savePreferences();
   }
 
+  void _onReconnectRetry() {
+    if (!OfflineConnectivityService().isOfflineNotifier.value && mounted) {
+      if (_pageErrors.containsKey(_currentPage)) {
+        _loadPage(_currentPage);
+      }
+      if (_chapters.isEmpty && !_isLoadingChapters) _loadFihris();
+    }
+  }
+
   @override
   void dispose() {
     themeService.removeListener(_onThemeChanged);
+    OfflineConnectivityService().isOfflineNotifier.removeListener(_onReconnectRetry);
     ShamelaService.saveLastReadPage(widget.book.id, _currentPage);
     _recordProgress(_currentPage);
     _pageController.dispose();

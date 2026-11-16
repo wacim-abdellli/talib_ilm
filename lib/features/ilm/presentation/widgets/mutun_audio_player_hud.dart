@@ -31,6 +31,7 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
   void initState() {
     super.initState();
     widget.audioService.playbackErrorNotifier.addListener(_onPlaybackError);
+    widget.audioService.isPlayingNotifier.addListener(_onPlayingChanged);
     if (widget.bookId != null) {
       widget.audioService.syncReciterForBook(widget.bookId!);
     }
@@ -42,7 +43,10 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
     if (oldWidget.audioService != widget.audioService) {
       oldWidget.audioService.playbackErrorNotifier
           .removeListener(_onPlaybackError);
+      oldWidget.audioService.isPlayingNotifier
+          .removeListener(_onPlayingChanged);
       widget.audioService.playbackErrorNotifier.addListener(_onPlaybackError);
+      widget.audioService.isPlayingNotifier.addListener(_onPlayingChanged);
     }
     if (oldWidget.bookId != widget.bookId && widget.bookId != null) {
       widget.audioService.syncReciterForBook(widget.bookId!);
@@ -52,13 +56,23 @@ class _MutunAudioPlayerHudState extends State<MutunAudioPlayerHud> {
   @override
   void dispose() {
     widget.audioService.playbackErrorNotifier.removeListener(_onPlaybackError);
+    widget.audioService.isPlayingNotifier.removeListener(_onPlayingChanged);
     super.dispose();
   }
 
+  void _onPlayingChanged() {
+    if (widget.audioService.isPlayingNotifier.value && mounted) {
+      AppSnackbar.dismiss();
+    }
+  }
+
   void _onPlaybackError() {
+    if (!mounted) return;
     final err = widget.audioService.playbackErrorNotifier.value;
-    if (err != null && mounted) {
+    if (err != null) {
       AppSnackbar.error(context, err);
+    } else {
+      AppSnackbar.dismiss();
     }
   }
 

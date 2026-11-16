@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/services/offline_connectivity_service.dart';
 import '../../../../core/utils/app_share.dart';
 
 import '../../../../app/app.dart';
@@ -84,6 +85,7 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
   void initState() {
     super.initState();
     themeService.addListener(_onThemeChanged);
+    OfflineConnectivityService().isOfflineNotifier.addListener(_onReconnectRetry);
     _showAudioBar = _audioService.isPlayingNotifier.value ||
         (_audioService.activeBookIdNotifier.value == widget.book.id &&
             MutunAudioCatalog.hasAudio(widget.book.id));
@@ -176,9 +178,22 @@ class _MutnDigitalReaderViewState extends State<MutnDigitalReaderView> {
     }
   }
 
+  void _onReconnectRetry() {
+    if (!OfflineConnectivityService().isOfflineNotifier.value && mounted) {
+      if (_pageErrors.isNotEmpty) {
+        _pageErrors.clear();
+        _preloadSurroundingPages(_currentPage);
+      }
+      if (_chapters.isEmpty && !_isLoadingChapters) {
+        _loadChapters();
+      }
+    }
+  }
+
   @override
   void dispose() {
     themeService.removeListener(_onThemeChanged);
+    OfflineConnectivityService().isOfflineNotifier.removeListener(_onReconnectRetry);
     _audioService.activeParagraphNotifier.removeListener(_onActiveParagraphChanged);
     _audioService.isPlayingNotifier.removeListener(_onAudioPlayingChanged);
     ShamelaService.saveLastReadPage(

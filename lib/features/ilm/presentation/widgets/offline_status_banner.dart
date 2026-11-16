@@ -23,6 +23,26 @@ class _OfflineStatusBannerState extends State<OfflineStatusBanner> {
   bool _isDismissed = false;
 
   @override
+  void initState() {
+    super.initState();
+    _connectivityService.isOfflineNotifier.addListener(_onConnectivityChanged);
+    _connectivityService.checkConnectivity();
+  }
+
+  @override
+  void dispose() {
+    _connectivityService.isOfflineNotifier
+        .removeListener(_onConnectivityChanged);
+    super.dispose();
+  }
+
+  void _onConnectivityChanged() {
+    if (!_connectivityService.isOfflineNotifier.value && _isDismissed && mounted) {
+      setState(() => _isDismissed = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final textTheme = context.text;

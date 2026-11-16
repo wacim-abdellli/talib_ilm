@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_policy.dart';
+import '../../../../core/services/offline_connectivity_service.dart';
 import '../catalogs/mutun_audio_catalog.dart';
 
 class MutunLoadedAudioResult {
@@ -25,7 +26,32 @@ class MutunLoadedAudioResult {
 
 /// Persistence & resilient streaming loader for [MutunAudioService].
 class MutunAudioSourceLoader {
-  final Set<String> _untrustedTlsHosts = <String>{};
+  final Map<String, DateTime> _untrustedTlsHosts = <String, DateTime>{};
+
+  /// Clears any cached host bypasses (e.g. when network connectivity is restored
+  /// or when the user explicitly retries audio playback).
+  void resetTransientFailures() {
+    _untrustedTlsHosts.clear();
+  }
+
+  bool _isHostTemporarilyBypassed(String host) {
+    final recordedAt = _untrustedTlsHosts[host];
+    if (recordedAt == null) return false;
+    // Never bypass permanently: expire after 1 minute so transient outages heal automatically.
+    if (DateTime.now().difference(recordedAt) > AppPolicy.pollingStandard * 2) {
+      _untrustedTlsHosts.remove(host);
+      return false;
+    }
+    return true;
+  }
+
+  bool _isTlsCertificateError(Object err) {
+    final msg = err.toString().toLowerCase();
+    return msg.contains('handshake') ||
+        msg.contains('certificate') ||
+        msg.contains('tls') ||
+        msg.contains('ssl');
+  }
 
   Future<void> persistReciterChoice(String bookId, String reciterId) async {
     try {
@@ -132,7 +158,7 @@ class MutunAudioSourceLoader {
     final host = Uri.tryParse(effectiveUrl)?.host;
     if (!effectiveIsFallback &&
         host != null &&
-        _untrustedTlsHosts.contains(host) &&
+        _isHostTemporarilyBypassed(host) &&
         fallbackCandidate != null &&
         fallbackCandidate.isNotEmpty) {
       effectiveUrl = fallbackCandidate;
@@ -177,6 +203,7 @@ class MutunAudioSourceLoader {
               initialPosition: initialPosition,
             )
             .timeout(AppPolicy.networkTimeout);
+        OfflineConnectivityService().reportOnline();
         return MutunLoadedAudioResult(
           loaded: true,
           isMultiChapter: true,
@@ -190,11 +217,7 @@ class MutunAudioSourceLoader {
       }
     }
 
-    final attemptTimeout = (!effectiveIsFallback &&
-            host == 'files.a-alqasim.com' &&
-            fallbackCandidate != null)
-        ? AppPolicy.networkFast
-        : AppPolicy.networkRetry;
+    final attemptTimeout = AppPolicy.networkTimeout;
 
     try {
       final tag = MediaItem(
@@ -211,6 +234,7 @@ class MutunAudioSourceLoader {
             initialPosition: initialPosition,
           )
           .timeout(attemptTimeout);
+      OfflineConnectivityService().reportOnline();
       return MutunLoadedAudioResult(
         loaded: true,
         isMultiChapter: false,
@@ -221,27 +245,27 @@ class MutunAudioSourceLoader {
       );
     } catch (sourceErr) {
       debugPrint('AudioSource.uri failed ($effectiveUrl): $sourceErr');
-      if (host == 'files.a-alqasim.com' && fallbackCandidate != null) {
-        _untrustedTlsHosts.add('files.a-alqasim.com');
-      } else {
-        try {
-          await player.stop();
-          final dur = await player
-              .setUrl(effectiveUrl, initialPosition: initialPosition)
-              .timeout(attemptTimeout);
-          return MutunLoadedAudioResult(
-            loaded: true,
-            isMultiChapter: false,
-            startChapter: 0,
-            duration: dur,
-            effectiveUrl: effectiveUrl,
-            usedFallback: effectiveIsFallback,
-          );
-        } catch (urlErr) {
-          debugPrint('Direct setUrl failed ($effectiveUrl): $urlErr');
-          if (host != null && fallbackCandidate != null) {
-            _untrustedTlsHosts.add(host);
-          }
+      try {
+        await player.stop();
+        final dur = await player
+            .setUrl(effectiveUrl, initialPosition: initialPosition)
+            .timeout(attemptTimeout);
+        OfflineConnectivityService().reportOnline();
+        return MutunLoadedAudioResult(
+          loaded: true,
+          isMultiChapter: false,
+          startChapter: 0,
+          duration: dur,
+          effectiveUrl: effectiveUrl,
+          usedFallback: effectiveIsFallback,
+        );
+      } catch (urlErr) {
+        debugPrint('Direct setUrl failed ($effectiveUrl): $urlErr');
+        if (host != null &&
+            fallbackCandidate != null &&
+            (_isTlsCertificateError(sourceErr) ||
+                _isTlsCertificateError(urlErr))) {
+          _untrustedTlsHosts[host] = DateTime.now();
         }
       }
     }
@@ -254,5 +278,96 @@ class MutunAudioSourceLoader {
       effectiveUrl: effectiveUrl,
       usedFallback: effectiveIsFallback,
     );
+  }
+
+  /// Resolves effective reciter for [bookId] falling back to the book's first reciter.
+  MutunReciter effectiveReciterForBook(String? bookId, MutunReciter current) {
+    if (bookId == null) return current;
+    final available = MutunAudioCatalog.getRecitersForBook(bookId);
+    if (available.isEmpty || available.any((r) => r.id == current.id)) {
+      return current;
+    }
+    return available.first;
+  }
+
+  /// Resolves the primary streaming URL for [bookId] with fallback to default Sini reciter.
+  String urlForBook(String bookId, String reciterId) =>
+      MutunAudioCatalog.getAudioUrl(bookId, reciterId: reciterId) ??
+      MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini') ??
+      '';
+
+  /// Loads [requestedUrl] into [player], automatically recreating & trying fallback URL on failure.
+  Future<MutunLoadedAudioResult> loadWithFallback({
+    required AudioPlayer Function() getPlayer,
+    required Future<void> Function() recreatePlayer,
+    required String bookId,
+    required String requestedUrl,
+    required MutunReciter reciter,
+    int? initialChapterIndex,
+    Duration? initialPosition,
+    bool isFallbackAttempt = false,
+  }) async {
+    final first = await loadIntoPlayer(
+      player: getPlayer(),
+      bookId: bookId,
+      requestedUrl: requestedUrl,
+      reciter: reciter,
+      initialChapterIndex: initialChapterIndex,
+      initialPosition: initialPosition,
+      isFallbackAttempt: isFallbackAttempt,
+    );
+    if (first.loaded || first.usedFallback || isFallbackAttempt) return first;
+    final fallbackUrl = resolveFallbackUrl(bookId, reciter.id, first.effectiveUrl);
+    if (fallbackUrl == null) return first;
+    await recreatePlayer();
+    return loadIntoPlayer(
+      player: getPlayer(),
+      bookId: bookId,
+      requestedUrl: fallbackUrl,
+      reciter: reciter,
+      initialPosition: initialPosition,
+      isFallbackAttempt: true,
+    );
+  }
+
+  /// Resolves the preferred reciter for [bookId] from saved preferences or defaults.
+  Future<MutunReciter?> pickReciterForBook(
+    String bookId,
+    MutunReciter current,
+  ) async {
+    final available = MutunAudioCatalog.getRecitersForBook(bookId);
+    if (available.isEmpty) return null;
+    var chosen = available.any((r) => r.id == current.id)
+        ? current
+        : available.first;
+    final savedId = await loadSavedReciterId(bookId);
+    if (savedId != null) {
+      final match = available.where((r) => r.id == savedId);
+      if (match.isNotEmpty) chosen = match.first;
+    }
+    return chosen;
+  }
+
+  /// Resolves the next alternative URL if primary source fails.
+  String? resolveFallbackUrl(
+    String bookId,
+    String reciterId,
+    String failedUrl,
+  ) {
+    final candidate =
+        MutunAudioCatalog.getFallbackAudioUrl(bookId, reciterId: reciterId) ??
+            MutunAudioCatalog.getAudioUrl(bookId, reciterId: 'sini');
+    if (candidate == null || candidate.isEmpty || candidate == failedUrl) {
+      return null;
+    }
+    return candidate;
+  }
+
+  /// Returns an accurate localized error message after checking connectivity.
+  Future<String> resolveErrorMessage() async {
+    final isOffline = await OfflineConnectivityService().checkConnectivity();
+    return isOffline
+        ? 'لا يوجد اتصال بالإنترنت. اضغط تشغيل عند عودة الشبكة'
+        : 'تعذر تشغيل الصوت. يرجى التحقق من الاتصال بالإنترنت';
   }
 }
